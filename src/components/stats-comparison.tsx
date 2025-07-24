@@ -79,9 +79,11 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
                     {weapon2Stats.ttk}ms
                   </Badge>
                 </div>
-                <p className='text-sm text-accent mt-2'>
-                  🏆 {ttkWinner} has a faster time-to-kill.
-                </p>
+                { ttkWinner &&
+                  <p className='text-sm text-accent mt-2'>
+                    🏆 {ttkWinner} has a faster time-to-kill.
+                  </p>
+                }
             </div>
           </div>
         </CardContent>
