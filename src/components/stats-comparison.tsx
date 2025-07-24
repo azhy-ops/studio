@@ -8,7 +8,7 @@ interface StatsComparisonProps {
   data: ExtractWeaponStatsOutput;
 }
 
-const statDisplayOrder: (keyof Omit<ExtractWeaponStatsOutput['weapon1Stats'], 'name'>)[] = [
+const statDisplayOrder: (keyof Omit<ExtractWeaponStatsOutput['weapon1Stats'], 'name' | 'handling'>)[] = [
   'damage',
   'range',
   'accuracy',
@@ -22,7 +22,7 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
     <div className="animate-in fade-in-0 duration-500">
       <Card className="w-full bg-card/50 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl sm:text-4xl">Comparison Results</CardTitle>
+          <CardTitle className="font-headline text-3xl sm:text-4xl">Stat Comparison</CardTitle>
           <CardDescription>The superior stat for each category is highlighted in violet.</CardDescription>
         </CardHeader>
         <CardContent>

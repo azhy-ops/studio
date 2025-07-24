@@ -25,25 +25,20 @@ const ExtractWeaponStatsInputSchema = z.object({
 });
 export type ExtractWeaponStatsInput = z.infer<typeof ExtractWeaponStatsInputSchema>;
 
+const WeaponStatsSchema = z.object({
+    name: z.string().describe('The name of the weapon.'),
+    damage: z.number().describe('The damage stat of the weapon.'),
+    stability: z.number().describe('The stability stat of the weapon.'),
+    range: z.number().describe('The range stat of the weapon.'),
+    accuracy: z.number().describe('The accuracy stat of the weapon.'),
+    control: z.number().describe('The control stat of the weapon.'),
+    mobility: z.number().describe('The mobility stat of the weapon.'),
+    handling: z.number().describe('The handling stat of the weapon. This should be the same as the mobility stat.'),
+});
+
 const ExtractWeaponStatsOutputSchema = z.object({
-  weapon1Stats: z.object({
-    name: z.string().describe('The name of weapon 1.'),
-    damage: z.number().describe('The damage stat of weapon 1.'),
-    stability: z.number().describe('The stability stat of weapon 1.'),
-    range: z.number().describe('The range stat of weapon 1.'),
-    accuracy: z.number().describe('The accuracy stat of weapon 1.'),
-    control: z.number().describe('The control stat of weapon 1.'),
-    mobility: z.number().describe('The mobility stat of weapon 1.'),
-  }),
-  weapon2Stats: z.object({
-    name: z.string().describe('The name of weapon 2.'),
-    damage: z.number().describe('The damage stat of weapon 2.'),
-    stability: z.number().describe('The stability stat of weapon 2.'),
-    range: z.number().describe('The range stat of weapon 2.'),
-    accuracy: z.number().describe('The accuracy stat of weapon 2.'),
-    control: z.number().describe('The control stat of weapon 2.'),
-    mobility: z.number().describe('The mobility stat of weapon 2.'),
-  }),
+  weapon1Stats: WeaponStatsSchema,
+  weapon2Stats: WeaponStatsSchema,
 });
 export type ExtractWeaponStatsOutput = z.infer<typeof ExtractWeaponStatsOutputSchema>;
 
@@ -57,7 +52,7 @@ const prompt = ai.definePrompt({
   output: {schema: ExtractWeaponStatsOutputSchema},
   prompt: `You are an expert game analyst specializing in extracting weapon stats from screenshots using OCR. The weapon's name is typically found at the top of the image in a larger or bold font.
 
-You will use this information to extract the stats and name of both weapons. If a weapon name cannot be determined, return "Unknown Weapon".
+You will use this information to extract the stats and name of both weapons. If a weapon name cannot be determined, return "Unknown Weapon". For the 'handling' stat, use the value from the 'mobility' stat.
 
 Use the following as the primary source of information about the weapons.
 

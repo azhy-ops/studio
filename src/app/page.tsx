@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { extractWeaponStats, type ExtractWeaponStatsOutput } from '@/ai/flows/extract-weapon-stats';
 import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
+import CombatRangeComparison from '@/components/combat-range-comparison';
 
 function StatsComparisonSkeleton() {
   return (
@@ -152,7 +153,12 @@ export default function Home() {
 
         <div className="w-full">
           {isLoading && <StatsComparisonSkeleton />}
-          {stats && !isLoading && <StatsComparison data={stats} />}
+          {stats && !isLoading && (
+            <div className="space-y-8">
+              <StatsComparison data={stats} />
+              <CombatRangeComparison data={stats} />
+            </div>
+          )}
         </div>
       </div>
     </main>
