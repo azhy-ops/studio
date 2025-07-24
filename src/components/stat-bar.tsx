@@ -1,8 +1,22 @@
+
 "use client";
 
 import { cn } from '@/lib/utils';
 import { StatIcon } from './stat-icons';
-import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Minus, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const statDescriptions: { [key: string]: string } = {
+  'Damage': 'How much health each shot removes from the enemy.',
+  'Range': 'How far the weapon remains effective before damage drop-off.',
+  'Control': 'How easy it is to manage the weapon’s recoil.',
+  'Handling': 'How fast you can aim down sights and switch weapons.',
+  'Mobility': 'How fast you can move while holding the weapon. Affects handling.',
+  'Stability': 'How steady the aim stays while shooting continuously.',
+  'Accuracy': 'How closely shots follow the crosshair during firing.',
+  'Fire Rate': 'How many bullets the gun fires per minute (RPM).',
+  'Muzzle Velocity': 'How fast bullets travel after being fired.',
+};
 
 interface StatBarProps {
   statName: string;
@@ -63,10 +77,24 @@ const StatBar = ({ statName, value1, value2, unit }: StatBarProps) => {
           )}
         </div>
         <StatIcon name={normalizedStatName} className="h-6 w-6 text-muted-foreground" />
-        <span className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {statName}
-          {unit && <span className="ml-1 opacity-70">({unit})</span>}
-        </span>
+        <div className="flex items-center gap-1.5 mt-1">
+           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+             {statName}
+             {unit && <span className="ml-1 opacity-70">({unit})</span>}
+           </span>
+          {statDescriptions[statName] && (
+            <TooltipProvider>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger>
+                    <Info className="h-3 w-3 text-muted-foreground/70 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{statDescriptions[statName]}</p>
+                  </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+           )}
+        </div>
       </div>
 
       {/* Weapon 2 Stat */}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ExtractWeaponStatsOutput } from '@/ai/flows/extract-weapon-stats';
@@ -25,7 +26,7 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
       <Card className="w-full bg-card/50 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl sm:text-4xl">Stat Comparison</CardTitle>
-          <CardDescription>The superior stat for each category is highlighted in violet.</CardDescription>
+          <CardDescription>The superior stat for each category is highlighted in violet. Hover over a stat's info icon for details.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 px-4 mb-4">
