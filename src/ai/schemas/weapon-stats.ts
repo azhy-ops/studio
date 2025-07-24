@@ -11,6 +11,7 @@ export const WeaponStatsSchema = z.object({
     handling: z.number().describe('The handling stat of the weapon. This should be the same as the mobility stat.'),
     fireRate: z.number().describe('The fire rate of the weapon (in RPM).'),
     muzzleVelocity: z.number().describe('The muzzle velocity of the weapon (in m/s).'),
+    ttk: z.number().describe('The time to kill in milliseconds, assuming 100 HP.'),
 });
 
 export const ExtractWeaponStatsInputSchema = z.object({
@@ -53,5 +54,6 @@ export const AnalyzeWeaponOutputSchema = z.object({
   stats: WeaponStatsSchema,
   recommendedRanges: z.array(z.enum(recommendedRanges)).describe("A list of recommended combat ranges for this weapon."),
   summaryPoints: z.array(SummaryPointSchema).describe("A bullet-point summary of the weapon's characteristics."),
+  ttkSummary: z.string().describe("A summary of the weapon's time-to-kill performance."),
 });
 export type AnalyzeWeaponOutput = z.infer<typeof AnalyzeWeaponOutputSchema>;

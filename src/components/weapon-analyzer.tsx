@@ -11,10 +11,10 @@ import type { AnalyzeWeaponOutput } from '@/ai/schemas/weapon-stats';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Badge } from './ui/badge';
 import { SimpleStatBar } from './stat-bar';
-import { Zap, ShieldCheck, ShieldAlert, ShieldPlus, List } from 'lucide-react';
+import { Zap, ShieldCheck, ShieldAlert, ShieldPlus, List, Timer } from 'lucide-react';
 
 
-const statDisplayOrder: (keyof Omit<AnalyzeWeaponOutput['stats'], 'name' | 'handling' | 'mobility'>)[] = [
+const statDisplayOrder: (keyof Omit<AnalyzeWeaponOutput['stats'], 'name' | 'handling' | 'mobility' | 'ttk'>)[] = [
   'damage',
   'fireRate',
   'range',
@@ -82,19 +82,31 @@ function AnalysisResult({ data }: { data: AnalyzeWeaponOutput }) {
             ))}
         </div>
       </CardHeader>
-      <CardContent>
-        <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
-          <List className="h-5 w-5" />
-          Key Points
-        </h3>
-        <ul className="space-y-2.5">
-            {data.summaryPoints.map((summary, index) => (
-                <li key={index} className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
-                    <span className="shrink-0">{pointTypeIcons[summary.type]}</span>
-                    <span>{summary.point}</span>
-                </li>
-            ))}
-        </ul>
+      <CardContent className="space-y-6">
+        <div>
+          <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
+            <Timer className="h-5 w-5" />
+            Time to Kill (100 HP)
+          </h3>
+          <div className='flex items-baseline gap-3'>
+            <p className="font-code text-3xl font-bold text-accent">{data.stats.ttk}ms</p>
+            <p className='text-muted-foreground'>{data.ttkSummary}</p>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
+            <List className="h-5 w-5" />
+            Key Points
+          </h3>
+          <ul className="space-y-2.5">
+              {data.summaryPoints.map((summary, index) => (
+                  <li key={index} className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
+                      <span className="shrink-0">{pointTypeIcons[summary.type]}</span>
+                      <span>{summary.point}</span>
+                  </li>
+              ))}
+          </ul>
+        </div>
       </CardContent>
     </Card>
   );

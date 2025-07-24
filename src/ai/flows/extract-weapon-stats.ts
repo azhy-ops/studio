@@ -15,8 +15,21 @@ import {
 } from '@/ai/schemas/weapon-stats';
 
 
+function calculateTTK(damage: number, fireRate: number): number {
+  if (damage <= 0 || fireRate <= 0) return 0;
+  const shotsToKill = Math.ceil(100 / damage);
+  const delayBetweenShots = 60 / fireRate; // in seconds
+  const ttk = (shotsToKill - 1) * delayBetweenShots;
+  return Math.round(ttk * 1000); // convert to milliseconds
+}
+
 export async function extractWeaponStats(input: ExtractWeaponStatsInput): Promise<ExtractWeaponStatsOutput> {
-  return extractWeaponStatsFlow(input);
+  const result = await extractWeaponStatsFlow(input);
+  
+  result.weapon1Stats.ttk = calculateTTK(result.weapon1Stats.damage, result.weapon1Stats.fireRate);
+  result.weapon2Stats.ttk = calculateTTK(result.weapon2Stats.damage, result.weapon2Stats.fireRate);
+  
+  return result;
 }
 
 const prompt = ai.definePrompt({
@@ -28,6 +41,8 @@ const prompt = ai.definePrompt({
 You will use this information to extract the stats and name of both weapons. If a weapon name cannot be determined, return "Unknown Weapon". For the 'handling' stat, use the value from the 'mobility' stat.
 
 Extract the following stats: Damage, Stability, Range, Accuracy, Control, Mobility, Fire Rate (in RPM), and Muzzle Velocity (in m/s).
+
+The time-to-kill (ttk) should be set to 0 and will be calculated later.
 
 Use the following as the primary source of information about the weapons.
 

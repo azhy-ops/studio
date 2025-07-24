@@ -19,12 +19,35 @@ import {
 } from '@/ai/schemas/weapon-stats';
 
 
+function calculateTTK(damage: number, fireRate: number): number {
+  if (damage <= 0 || fireRate <= 0) return 0;
+  const shotsToKill = Math.ceil(100 / damage);
+  const delayBetweenShots = 60 / fireRate; // in seconds
+  const ttk = (shotsToKill - 1) * delayBetweenShots;
+  return Math.round(ttk * 1000); // convert to milliseconds
+}
+
+function getTTKSummary(ttk: number): string {
+    if (ttk <= 0) return "TTK could not be calculated.";
+    if (ttk < 250) {
+        return "🔥 Fast time-to-kill — deadly in short fights";
+    } else if (ttk <= 400) {
+        return "👍 Balanced TTK for mid-range combat";
+    } else {
+        return "⚠️ Slow time-to-kill — may struggle in 1v1s";
+    }
+}
+
 export async function analyzeWeapon(input: AnalyzeWeaponInput): Promise<AnalyzeWeaponOutput> {
   const ocrResult = await ocrFlow(input);
-  const result = await analysisFlow(ocrResult.stats);
+  ocrResult.stats.ttk = calculateTTK(ocrResult.stats.damage, ocrResult.stats.fireRate);
+  
+  const analysisResult = await analysisFlow(ocrResult.stats);
+  
   return {
     stats: ocrResult.stats,
-    ...result
+    ...analysisResult,
+    ttkSummary: getTTKSummary(ocrResult.stats.ttk),
   };
 }
 
@@ -43,6 +66,7 @@ Analyze the following weapon stats:
 - Control: {{control}}
 - Stability: {{stability}}
 - Muzzle Velocity: {{muzzleVelocity}} m/s
+- TTK: {{ttk}}ms
 
 Based on these stats, perform the following actions:
 
@@ -90,6 +114,8 @@ You will use this information to extract the stats and name of the weapon. If a 
 The top 15% of the image is most likely to contain the weapon's name.
 
 Extract the following stats: Damage, Stability, Range, Accuracy, Control, Mobility, Fire Rate (in RPM), and Muzzle Velocity (in m/s).
+
+The time-to-kill (ttk) should be set to 0 and will be calculated later.
 
 Use the following as the primary source of information about the weapon.
 
