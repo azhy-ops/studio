@@ -28,7 +28,7 @@ export type ExtractWeaponStatsInput = z.infer<typeof ExtractWeaponStatsInputSche
 const ExtractWeaponStatsOutputSchema = z.object({
   weapon1Stats: z.object({
     damage: z.number().describe('The damage stat of weapon 1.'),
-    fireRate: z.number().describe('The fire rate stat of weapon 1.'),
+    stability: z.number().describe('The stability stat of weapon 1.'),
     range: z.number().describe('The range stat of weapon 1.'),
     accuracy: z.number().describe('The accuracy stat of weapon 1.'),
     control: z.number().describe('The control stat of weapon 1.'),
@@ -36,7 +36,7 @@ const ExtractWeaponStatsOutputSchema = z.object({
   }),
   weapon2Stats: z.object({
     damage: z.number().describe('The damage stat of weapon 2.'),
-    fireRate: z.number().describe('The fire rate stat of weapon 2.'),
+    stability: z.number().describe('The stability stat of weapon 2.'),
     range: z.number().describe('The range stat of weapon 2.'),
     accuracy: z.number().describe('The accuracy stat of weapon 2.'),
     control: z.number().describe('The control stat of weapon 2.'),

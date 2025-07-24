@@ -10,10 +10,10 @@ interface StatsComparisonProps {
 
 const statDisplayOrder: (keyof ExtractWeaponStatsOutput['weapon1Stats'])[] = [
   'damage',
-  'fireRate',
   'range',
   'accuracy',
   'control',
+  'stability',
   'mobility',
 ];
 
