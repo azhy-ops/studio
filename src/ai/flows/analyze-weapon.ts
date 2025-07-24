@@ -14,68 +14,68 @@ import {
     AnalyzeWeaponOutputSchema,
     type AnalyzeWeaponOutput,
     WeaponStatsSchema,
+    SummaryPointSchema,
     recommendedRanges
 } from '@/ai/schemas/weapon-stats';
 
 
 export async function analyzeWeapon(input: AnalyzeWeaponInput): Promise<AnalyzeWeaponOutput> {
-  const ocrResult = await analyzeWeaponFlow(input);
-  
-  const { damage, handling, range, accuracy, control } = ocrResult.stats;
-  
-  let recommendedRange: (typeof recommendedRanges)[number] = "Mid Range";
-  if ((damage + handling) > 150 && range < 40) {
-      recommendedRange = "Close Range";
-  } else if ((range + accuracy) > 140 && control > 60) {
-      recommendedRange = "Long Range";
-  }
-  
-  const overallScore = Math.min(100, Math.round(
-      (damage * 0.3 + range * 0.25 + accuracy * 0.2 + control * 0.15 + handling * 0.1)
-  ));
-  
-  const finalResult = await weaponSummaryFlow({
-      ...ocrResult,
-      recommendedRange,
-      overallScore,
-  });
-
+  const ocrResult = await ocrFlow(input);
+  const result = await analysisFlow(ocrResult.stats);
   return {
     stats: ocrResult.stats,
-    recommendedRange,
-    overallScore,
-    summary: finalResult.summary,
+    ...result
   };
 }
 
+const analysisPrompt = ai.definePrompt({
+    name: 'analysisPrompt',
+    input: { schema: WeaponStatsSchema },
+    output: { schema: z.object({ recommendedRanges: z.array(z.enum(recommendedRanges)), summaryPoints: z.array(SummaryPointSchema) }) },
+    prompt: `You are an expert weapon analyst for a popular first-person shooter game. Your task is to analyze a weapon's stats and provide a tactical breakdown for the player. Do not mention mobility or handling in your summary points.
 
-const weaponSummaryFlow = ai.defineFlow(
-  {
-    name: 'weaponSummaryFlow',
-    inputSchema: AnalyzeWeaponOutputSchema.omit({ summary: true }),
-    outputSchema: z.object({ summary: z.string() }),
-  },
-  async (input) => {
-    const prompt = `
-      Analyze the following weapon stats and provide a brief summary of its ideal playstyle.
+Analyze the following weapon stats:
+- Weapon: {{name}}
+- Damage: {{damage}}
+- Fire Rate: {{fireRate}} RPM
+- Range: {{range}}
+- Accuracy: {{accuracy}}
+- Control: {{control}}
+- Stability: {{stability}}
+- Muzzle Velocity: {{muzzleVelocity}} m/s
 
-      Weapon: ${input.stats.name}
-      Recommended Range: ${input.recommendedRange}
-      Overall Score: ${input.overallScore}
-      Stats: 
-      - Damage: ${input.stats.damage}
-      - Fire Rate: ${input.stats.fireRate}
-      - Range: ${input.stats.range}
-      - Accuracy: ${input.stats.accuracy}
-      - Control: ${input.stats.control}
-      - Stability: ${input.stats.stability}
-      
-      Generate a short, insightful comment about this weapon's strengths and ideal usage. For example: "Perfect for aggressive players who prefer close-quarters combat." or "A versatile rifle that excels at medium-range engagements."
-    `;
+Based on these stats, perform the following actions:
 
-    const { text } = await ai.generate({ prompt });
-    return { summary: text };
-  }
+1.  **Determine Best Combat Range(s):**
+    - Classify as **"Close Range"** if Fire Rate, Handling (same as Mobility), and Damage are all > 65.
+    - Classify as **"Mid Range"** if Accuracy, Control, and Stability are all > 65.
+    - Classify as **"Long Range"** if Accuracy > 75, Stability > 70, and Range > 65.
+    - If it's effective in multiple ranges, list all of them. If none, select the most fitting one.
+
+2.  **Generate Key Point Summary (5-6 bullet points):**
+    - Create a list of the weapon's key strengths and weaknesses in simple terms.
+    - Use the following types for each point: 'strength' (for primary advantages, 🔹), 'secondary-strength' (for notable but less critical perks, 🔸), and 'weakness' (for clear disadvantages, ⚠️).
+    - Provide insightful comments. Examples:
+        - point: "High damage with fast fire rate – excellent for close-range fights", type: "strength"
+        - point: "Great control and stability – ideal for mid-range consistency", type: "secondary-strength"
+        - point: "Low mobility – harder to reposition quickly", type: "weakness"
+        - point: "Accurate at range – can land shots at a long distance", type: "strength"
+        - point: "Fast handling makes it strong in surprise engagements", type: "secondary-strength"
+
+Output the analysis in JSON format.
+`,
+});
+
+const analysisFlow = ai.defineFlow(
+    {
+        name: 'analysisFlow',
+        inputSchema: WeaponStatsSchema,
+        outputSchema: z.object({ recommendedRanges: z.array(z.enum(recommendedRanges)), summaryPoints: z.array(SummaryPointSchema) }),
+    },
+    async (stats) => {
+        const { output } = await analysisPrompt(stats);
+        return output!;
+    }
 );
 
 
@@ -99,9 +99,9 @@ Output the stats for the weapon in JSON format.
 `,
 });
 
-const analyzeWeaponFlow = ai.defineFlow(
+const ocrFlow = ai.defineFlow(
   {
-    name: 'analyzeWeaponFlow',
+    name: 'ocrFlow',
     inputSchema: AnalyzeWeaponInputSchema,
     outputSchema: z.object({stats: WeaponStatsSchema}),
   },

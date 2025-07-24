@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,7 +11,7 @@ import type { AnalyzeWeaponOutput } from '@/ai/schemas/weapon-stats';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Badge } from './ui/badge';
 import { SimpleStatBar } from './stat-bar';
-import { Shield, Target, Gauge, Zap } from 'lucide-react';
+import { Zap, ShieldCheck, ShieldAlert, ShieldPlus, List } from 'lucide-react';
 
 
 const statDisplayOrder: (keyof Omit<AnalyzeWeaponOutput['stats'], 'name' | 'handling' | 'mobility'>)[] = [
@@ -39,58 +38,63 @@ function AnalysisSkeleton() {
     return (
       <Card className="w-full">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-8 w-24" />
-          </div>
+          <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
+          <div className="flex gap-2 pt-2">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-6 w-24" />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-6 w-full" />
-          <div className="space-y-3 pt-4">
-            {Array.from({ length: 7 }).map((_, i) => (
-               <div key={i} className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+          <Skeleton className="h-6 w-1/3" />
+          <div className="space-y-3 pt-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+               <div key={i} className="flex items-center gap-3">
                  <Skeleton className="h-5 w-5 rounded-full" />
-                 <Skeleton className="h-3 w-full" />
-                 <Skeleton className="h-6 w-8" />
+                 <Skeleton className="h-4 w-full" />
                </div>
             ))}
           </div>
         </CardContent>
       </Card>
     );
-  }
+}
+
+const pointTypeIcons: Record<string, React.ReactNode> = {
+    strength: <ShieldCheck className="h-5 w-5 text-green-400" />,
+    'secondary-strength': <ShieldPlus className="h-5 w-5 text-blue-400" />,
+    weakness: <ShieldAlert className="h-5 w-5 text-red-400" />,
+};
 
 function AnalysisResult({ data }: { data: AnalyzeWeaponOutput }) {
-  const scoreColor = data.overallScore > 75 ? 'text-green-400' : data.overallScore > 50 ? 'text-yellow-400' : 'text-red-400';
   
   return (
     <Card className="w-full bg-card/50 backdrop-blur-sm animate-in fade-in-0 duration-500">
       <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-            <CardTitle className="font-headline text-3xl sm:text-4xl">{data.stats.name}</CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">{data.recommendedRange}</Badge>
-              <div className="flex items-baseline gap-1.5">
-                <span className={`font-headline text-4xl font-bold ${scoreColor}`}>{data.overallScore}</span>
-                <span className="text-muted-foreground">/ 100</span>
-              </div>
-            </div>
+        <CardTitle className="font-headline text-3xl sm:text-4xl">{data.stats.name}</CardTitle>
+        <CardDescription>
+          A tactical breakdown of the {data.stats.name}'s performance characteristics.
+        </CardDescription>
+        <div className="flex flex-wrap items-center gap-2 pt-2">
+            <span className='text-sm font-medium text-muted-foreground'>Best for:</span>
+            {data.recommendedRanges.map(range => (
+                <Badge key={range} variant="outline" className="text-base">{range}</Badge>
+            ))}
         </div>
-        <CardDescription>{data.summary}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-            {statDisplayOrder.map((statName, index) => {
-                const value = data.stats[statName];
-                if (typeof value === 'undefined') return null;
-                return (
-                    <div key={statName} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 75}ms`}}>
-                        <SimpleStatBar statName={statName} value={value} label={statLabels[statName]} />
-                    </div>
-                );
-            })}
-        </div>
+        <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
+          <List className="h-5 w-5" />
+          Key Points
+        </h3>
+        <ul className="space-y-2.5">
+            {data.summaryPoints.map((summary, index) => (
+                <li key={index} className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
+                    <span className="shrink-0">{pointTypeIcons[summary.type]}</span>
+                    <span>{summary.point}</span>
+                </li>
+            ))}
+        </ul>
       </CardContent>
     </Card>
   );

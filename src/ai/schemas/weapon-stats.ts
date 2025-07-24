@@ -17,12 +17,12 @@ export const ExtractWeaponStatsInputSchema = z.object({
   weapon1PhotoDataUri: z
     .string()
     .describe(
-      "A photo of weapon 1, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of weapon 1, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
   weapon2PhotoDataUri: z
     .string()
     .describe(
-      "A photo of weapon 2, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of weapon 2, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
 });
 export type ExtractWeaponStatsInput = z.infer<typeof ExtractWeaponStatsInputSchema>;
@@ -37,17 +37,21 @@ export const AnalyzeWeaponInputSchema = z.object({
   weaponPhotoDataUri: z
     .string()
     .describe(
-      "A photo of a weapon, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of a weapon, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
 });
 export type AnalyzeWeaponInput = z.infer<typeof AnalyzeWeaponInputSchema>;
 
 export const recommendedRanges = ["Close Range", "Mid Range", "Long Range"] as const;
 
+export const SummaryPointSchema = z.object({
+    point: z.string().describe("A key point about the weapon's strength or weakness."),
+    type: z.enum(["strength", "secondary-strength", "weakness"]).describe("The type of the key point: strength (🔹), secondary-strength (🔸), or weakness (⚠️)."),
+});
+
 export const AnalyzeWeaponOutputSchema = z.object({
   stats: WeaponStatsSchema,
-  recommendedRange: z.enum(recommendedRanges).describe("The recommended combat range for this weapon based on its stats."),
-  overallScore: z.number().min(0).max(100).describe("The overall score of the weapon, from 0 to 100."),
-  summary: z.string().describe("A short comment describing the weapon's ideal usage, like 'Perfect for aggressive players' or 'Better suited for sniping or support roles.'"),
+  recommendedRanges: z.array(z.enum(recommendedRanges)).describe("A list of recommended combat ranges for this weapon."),
+  summaryPoints: z.array(SummaryPointSchema).describe("A bullet-point summary of the weapon's characteristics."),
 });
 export type AnalyzeWeaponOutput = z.infer<typeof AnalyzeWeaponOutputSchema>;
