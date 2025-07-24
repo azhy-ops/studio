@@ -7,12 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeWeapon } from '@/ai/flows/analyze-weapon';
-import type { AnalyzeWeaponOutput } from '@/ai/schemas/weapon-stats';
+import type { AnalyzeWeaponOutput, WeaponStats } from '@/ai/schemas/weapon-stats';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Badge } from './ui/badge';
-import { SimpleStatBar } from './stat-bar';
-import { Zap, ShieldCheck, ShieldAlert, ShieldPlus, List, Timer } from 'lucide-react';
-
+import { List, Timer, ShieldCheck, ShieldPlus, ShieldAlert } from 'lucide-react';
 
 const statDisplayOrder: (keyof Omit<AnalyzeWeaponOutput['stats'], 'name' | 'handling' | 'mobility' | 'ttk'>)[] = [
   'damage',
@@ -33,6 +31,88 @@ const statLabels: Record<typeof statDisplayOrder[number], string> = {
   stability: 'Stability',
   muzzleVelocity: 'Muzzle Velocity',
 };
+
+// --- Rule-based analysis logic ---
+
+const statDescriptions: Record<string, string> = {
+    damage: 'damage per shot',
+    range: 'effective distance',
+    control: 'recoil manageability',
+    handling: 'ADS & swap speed',
+    stability: 'aim steadiness during continuous fire',
+    accuracy: 'shot grouping precision',
+    mobility: 'movement speed while equipped',
+    fireRate: 'bullets fired per minute',
+    muzzleVelocity: 'bullet travel speed',
+};
+
+const getSummaryPoints = (stats: WeaponStats): { point: string; type: 'strength' | 'secondary-strength' | 'weakness' }[] => {
+    const points: { point: string; type: 'strength' | 'secondary-strength' | 'weakness' }[] = [];
+    const statKeys = Object.keys(statDescriptions) as (keyof typeof statDescriptions)[];
+
+    for (const key of statKeys) {
+        const value = stats[key as keyof WeaponStats];
+        if (typeof value !== 'number') continue;
+        const name = key.charAt(0).toUpperCase() + key.slice(1);
+
+        if (value >= 75) {
+            points.push({ point: `High ${statDescriptions[key]} – great for its class.`, type: 'strength' });
+        } else if (value >= 50) {
+            points.push({ point: `Moderate ${statDescriptions[key]} – usable in most scenarios.`, type: 'secondary-strength' });
+        } else {
+            points.push({ point: `Low ${statDescriptions[key]} – may struggle where this is critical.`, type: 'weakness' });
+        }
+    }
+    return points.slice(0, 7);
+};
+
+const calculateScores = (stats: WeaponStats) => {
+    const s = { ...stats }; // Create a mutable copy
+
+    const shortRangeScore = 
+        s.damage * 0.20 + s.fireRate * 0.20 + s.handling * 0.15 + s.control * 0.15 + 
+        s.mobility * 0.10 + s.stability * 0.10 + s.accuracy * 0.05 + s.range * 0.03 + 
+        s.muzzleVelocity * 0.02;
+
+    const midRangeScore = 
+        s.accuracy * 0.20 + s.damage * 0.18 + s.control * 0.15 + s.stability * 0.15 + 
+        s.range * 0.12 + s.handling * 0.10 + s.fireRate * 0.05 + s.mobility * 0.03 + 
+        s.muzzleVelocity * 0.02;
+
+    const longRangeScore = 
+        s.accuracy * 0.25 + s.stability * 0.20 + s.control * 0.15 + s.damage * 0.15 + 
+        s.range * 0.10 + s.muzzleVelocity * 0.08 + s.handling * 0.03 + s.mobility * 0.02;
+
+    return { shortRangeScore, midRangeScore, longRangeScore };
+};
+
+const getRecommendedRanges = (scores: { shortRangeScore: number; midRangeScore: number; longRangeScore: number }): string[] => {
+    const ranges: string[] = [];
+    if (scores.shortRangeScore >= 65) ranges.push("Short Range");
+    if (scores.midRangeScore >= 65) ranges.push("Mid Range");
+    if (scores.longRangeScore >= 65) ranges.push("Long Range");
+
+    if (ranges.length > 0) return ranges;
+
+    // If none qualify, find the highest score
+    const highestScore = Math.max(scores.shortRangeScore, scores.midRangeScore, scores.longRangeScore);
+    if (highestScore === scores.shortRangeScore) return ["Most suited for Short Range"];
+    if (highestScore === scores.midRangeScore) return ["Most suited for Mid Range"];
+    return ["Most suited for Long Range"];
+};
+
+const runRuleBasedAnalysis = (stats: WeaponStats): Omit<AnalyzeWeaponOutput, 'ttkSummary'> => {
+    const scores = calculateScores(stats);
+    const recommendedRanges = getRecommendedRanges(scores);
+    const summaryPoints = getSummaryPoints(stats);
+
+    return {
+        stats,
+        recommendedRanges,
+        summaryPoints,
+    };
+};
+// --- End of rule-based analysis logic ---
 
 function AnalysisSkeleton() {
     return (
@@ -66,7 +146,7 @@ const pointTypeIcons: Record<string, React.ReactNode> = {
     weakness: <ShieldAlert className="h-5 w-5 text-red-400" />,
 };
 
-function AnalysisResult({ data }: { data: AnalyzeWeaponOutput }) {
+function AnalysisResult({ data }: { data: Omit<AnalyzeWeaponOutput, 'ttkSummary'> }) {
   
   return (
     <Card className="w-full bg-card/50 backdrop-blur-sm animate-in fade-in-0 duration-500">
@@ -83,16 +163,6 @@ function AnalysisResult({ data }: { data: AnalyzeWeaponOutput }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div>
-          <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
-            <Timer className="h-5 w-5" />
-            Time to Kill (100 HP)
-          </h3>
-          <div className='flex items-baseline gap-3'>
-            <p className="font-code text-3xl font-bold text-accent">{data.stats.ttk}ms</p>
-            <p className='text-muted-foreground'>{data.ttkSummary}</p>
-          </div>
-        </div>
         <div>
           <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
             <List className="h-5 w-5" />
@@ -112,12 +182,11 @@ function AnalysisResult({ data }: { data: AnalyzeWeaponOutput }) {
   );
 }
 
-
 export default function WeaponAnalyzer() {
   const [weaponDataUri, setWeaponDataUri] = useState<string | null>(null);
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
   const [weaponName, setWeaponName] = useState('');
-  const [analysisResult, setAnalysisResult] = useState<AnalyzeWeaponOutput | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<Omit<AnalyzeWeaponOutput, 'ttkSummary'> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -149,11 +218,17 @@ export default function WeaponAnalyzer() {
     setAnalysisResult(null);
 
     try {
-      const result = await analyzeWeapon({ weaponPhotoDataUri: weaponDataUri });
-      if (result.stats.name && result.stats.name !== 'Unknown Weapon') {
-          setWeaponName(result.stats.name);
+      // Step 1: Use the AI flow for OCR extraction only
+      const ocrResult = await analyzeWeapon({ weaponPhotoDataUri: weaponDataUri });
+      
+      if (ocrResult.stats.name && ocrResult.stats.name !== 'Unknown Weapon') {
+          setWeaponName(ocrResult.stats.name);
       }
+      
+      // Step 2: Run the local rule-based analysis
+      const result = runRuleBasedAnalysis(ocrResult.stats);
       setAnalysisResult(result);
+
     } catch (e) {
       console.error(e);
       toast({
@@ -186,7 +261,6 @@ export default function WeaponAnalyzer() {
                 disabled={!weaponDataUri || isLoading}
                 className="font-headline text-lg"
             >
-                <Zap className="mr-2 h-5 w-5" />
                 {isLoading ? 'Analyzing...' : 'Analyze Weapon'}
             </Button>
         </div>
