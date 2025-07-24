@@ -1,9 +1,9 @@
 
 "use client";
 
-import type { ExtractWeaponStatsOutput } from '@/ai/flows/extract-weapon-stats';
+import type { ExtractWeaponStatsOutput } from '@/ai/schemas/weapon-stats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import StatBar from './stat-bar';
+import { StatBarComparison } from './stat-bar';
 
 interface StatsComparisonProps {
   data: ExtractWeaponStatsOutput;
@@ -53,7 +53,7 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
 
               return (
                  <div key={statName} className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
-                    <StatBar
+                    <StatBarComparison
                       statName={formattedStatName}
                       value1={value1}
                       value2={value2}

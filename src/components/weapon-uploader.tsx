@@ -12,9 +12,10 @@ interface WeaponUploaderProps {
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   weaponName: string;
   onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  isSingleUploader?: boolean;
 }
 
-const WeaponUploader = ({ weaponNumber, previewUrl, onFileChange, weaponName, onNameChange }: WeaponUploaderProps) => {
+const WeaponUploader = ({ weaponNumber, previewUrl, onFileChange, weaponName, onNameChange, isSingleUploader = false }: WeaponUploaderProps) => {
   const inputId = `file-upload-${weaponNumber}`;
 
   return (
@@ -35,7 +36,7 @@ const WeaponUploader = ({ weaponNumber, previewUrl, onFileChange, weaponName, on
             <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
               <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
               <p className="mb-2 text-sm text-muted-foreground font-semibold">
-                Upload Weapon {weaponNumber} Screenshot
+                {isSingleUploader ? 'Upload Weapon Screenshot' : `Upload Weapon ${weaponNumber} Screenshot`}
               </p>
               <p className="text-xs text-muted-foreground">Click or drag & drop</p>
             </div>
@@ -51,7 +52,7 @@ const WeaponUploader = ({ weaponNumber, previewUrl, onFileChange, weaponName, on
         <div className="relative">
           <Input
             type="text"
-            placeholder={`Weapon ${weaponNumber} Name`}
+            placeholder={isSingleUploader ? 'Weapon Name' : `Weapon ${weaponNumber} Name`}
             value={weaponName}
             onChange={onNameChange}
             className="pr-8"

@@ -4,45 +4,16 @@
  * @fileOverview A weapon stats extraction AI agent.
  *
  * - extractWeaponStats - A function that handles the weapon stats extraction process.
- * - ExtractWeaponStatsInput - The input type for the extractWeaponStats function.
- * - ExtractWeaponStatsOutput - The return type for the extractWeaponStats function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {
+  ExtractWeaponStatsInputSchema,
+  type ExtractWeaponStatsInput,
+  ExtractWeaponStatsOutputSchema,
+  type ExtractWeaponStatsOutput,
+} from '@/ai/schemas/weapon-stats';
 
-const ExtractWeaponStatsInputSchema = z.object({
-  weapon1PhotoDataUri: z
-    .string()
-    .describe(
-      "A photo of weapon 1, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-  weapon2PhotoDataUri: z
-    .string()
-    .describe(
-      "A photo of weapon 2, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type ExtractWeaponStatsInput = z.infer<typeof ExtractWeaponStatsInputSchema>;
-
-const WeaponStatsSchema = z.object({
-    name: z.string().describe('The name of the weapon.'),
-    damage: z.number().describe('The damage stat of the weapon.'),
-    stability: z.number().describe('The stability stat of the weapon.'),
-    range: z.number().describe('The range stat of the weapon.'),
-    accuracy: z.number().describe('The accuracy stat of the weapon.'),
-    control: z.number().describe('The control stat of the weapon.'),
-    mobility: z.number().describe('The mobility stat of the weapon.'),
-    handling: z.number().describe('The handling stat of the weapon. This should be the same as the mobility stat.'),
-    fireRate: z.number().describe('The fire rate of the weapon (in RPM).'),
-    muzzleVelocity: z.number().describe('The muzzle velocity of the weapon (in m/s).'),
-});
-
-const ExtractWeaponStatsOutputSchema = z.object({
-  weapon1Stats: WeaponStatsSchema,
-  weapon2Stats: WeaponStatsSchema,
-});
-export type ExtractWeaponStatsOutput = z.infer<typeof ExtractWeaponStatsOutputSchema>;
 
 export async function extractWeaponStats(input: ExtractWeaponStatsInput): Promise<ExtractWeaponStatsOutput> {
   return extractWeaponStatsFlow(input);

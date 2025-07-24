@@ -20,12 +20,61 @@ const statDescriptions: { [key: string]: string } = {
 
 interface StatBarProps {
   statName: string;
+  value: number;
+  label: string;
+  isSuperior?: boolean;
+}
+
+const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarProps) => {
+  const maxStatValue = statName.toLowerCase() === 'firerate' || statName.toLowerCase() === 'muzzlevelocity' ? 1200 : 100;
+  const barWidth = Math.min((value / maxStatValue) * 100, 100);
+  const normalizedStatName = statName.toLowerCase().replace(/\s/g, '');
+
+  return (
+    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground w-32">
+        <StatIcon name={normalizedStatName} className="h-5 w-5" />
+        <span>{label}</span>
+        {statDescriptions[label] && (
+            <TooltipProvider>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger>
+                    <Info className="h-3 w-3 text-muted-foreground/70 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{statDescriptions[label]}</p>
+                  </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        )}
+      </div>
+      <div className="w-full overflow-hidden rounded-full bg-muted h-3">
+        <div
+          className={cn('h-3 rounded-full transition-all duration-500', isSuperior ? 'bg-accent' : 'bg-primary/50')}
+          style={{ width: `${barWidth}%` }}
+        />
+      </div>
+       <span
+        className={cn(
+          'font-code text-lg font-semibold transition-colors w-12 text-right',
+          isSuperior ? 'text-accent' : 'text-foreground'
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
+};
+
+
+interface StatBarComparisonProps {
+  statName: string;
   value1: number;
   value2: number;
   unit?: string;
 }
 
-const StatBar = ({ statName, value1, value2, unit }: StatBarProps) => {
+const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparisonProps) => {
   const is1Superior = value1 > value2;
   const is2Superior = value2 > value1;
   const maxStatValue = statName === 'Fire Rate' || statName === 'Muzzle Velocity' ? 1200 : 100;
@@ -34,9 +83,9 @@ const StatBar = ({ statName, value1, value2, unit }: StatBarProps) => {
 
   const normalizedStatName = statName.toLowerCase().replace(/\s/g, '');
 
-  const percentageDiff = Math.round(
+  const percentageDiff = value1 !== value2 ? Math.round(
     ((value1 - value2) / Math.max(value1, value2, 1)) * 100
-  );
+  ) : 0;
 
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
@@ -118,4 +167,4 @@ const StatBar = ({ statName, value1, value2, unit }: StatBarProps) => {
   );
 };
 
-export default StatBar;
+export { StatBarComparison, SimpleStatBar };

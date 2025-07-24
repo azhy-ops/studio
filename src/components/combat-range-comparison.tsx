@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import type { ExtractWeaponStatsOutput } from '@/ai/flows/extract-weapon-stats';
+import type { ExtractWeaponStatsOutput } from '@/ai/schemas/weapon-stats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from '@/components/ui/progress';
