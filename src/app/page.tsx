@@ -45,6 +45,8 @@ export default function Home() {
   const [weapon2DataUri, setWeapon2DataUri] = useState<string | null>(null);
   const [weapon1Preview, setWeapon1Preview] = useState<string | null>(null);
   const [weapon2Preview, setWeapon2Preview] = useState<string | null>(null);
+  const [weapon1Name, setWeapon1Name] = useState('');
+  const [weapon2Name, setWeapon2Name] = useState('');
 
   const [stats, setStats] = useState<ExtractWeaponStatsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -93,6 +95,8 @@ export default function Home() {
         weapon2PhotoDataUri: weapon2DataUri,
       });
       setStats(result);
+      setWeapon1Name(result.weapon1Stats.name);
+      setWeapon2Name(result.weapon2Stats.name);
     } catch (e) {
       console.error(e);
       toast({
@@ -122,11 +126,15 @@ export default function Home() {
             weaponNumber={1}
             previewUrl={weapon1Preview}
             onFileChange={(e) => handleFileChange(e, 1)}
+            weaponName={weapon1Name}
+            onNameChange={(e) => setWeapon1Name(e.target.value)}
           />
           <WeaponUploader
             weaponNumber={2}
             previewUrl={weapon2Preview}
             onFileChange={(e) => handleFileChange(e, 2)}
+            weaponName={weapon2Name}
+            onNameChange={(e) => setWeapon2Name(e.target.value)}
           />
         </div>
 

@@ -27,6 +27,7 @@ export type ExtractWeaponStatsInput = z.infer<typeof ExtractWeaponStatsInputSche
 
 const ExtractWeaponStatsOutputSchema = z.object({
   weapon1Stats: z.object({
+    name: z.string().describe('The name of weapon 1.'),
     damage: z.number().describe('The damage stat of weapon 1.'),
     stability: z.number().describe('The stability stat of weapon 1.'),
     range: z.number().describe('The range stat of weapon 1.'),
@@ -35,6 +36,7 @@ const ExtractWeaponStatsOutputSchema = z.object({
     mobility: z.number().describe('The mobility stat of weapon 1.'),
   }),
   weapon2Stats: z.object({
+    name: z.string().describe('The name of weapon 2.'),
     damage: z.number().describe('The damage stat of weapon 2.'),
     stability: z.number().describe('The stability stat of weapon 2.'),
     range: z.number().describe('The range stat of weapon 2.'),
@@ -53,9 +55,9 @@ const prompt = ai.definePrompt({
   name: 'extractWeaponStatsPrompt',
   input: {schema: ExtractWeaponStatsInputSchema},
   output: {schema: ExtractWeaponStatsOutputSchema},
-  prompt: `You are an expert game analyst specializing in extracting weapon stats from screenshots using OCR.
+  prompt: `You are an expert game analyst specializing in extracting weapon stats from screenshots using OCR. The weapon's name is typically found at the top of the image in a larger or bold font.
 
-You will use this information to extract the stats of both weapons.
+You will use this information to extract the stats and name of both weapons. If a weapon name cannot be determined, return "Unknown Weapon".
 
 Use the following as the primary source of information about the weapons.
 

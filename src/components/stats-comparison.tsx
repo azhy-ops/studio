@@ -8,7 +8,7 @@ interface StatsComparisonProps {
   data: ExtractWeaponStatsOutput;
 }
 
-const statDisplayOrder: (keyof ExtractWeaponStatsOutput['weapon1Stats'])[] = [
+const statDisplayOrder: (keyof Omit<ExtractWeaponStatsOutput['weapon1Stats'], 'name'>)[] = [
   'damage',
   'range',
   'accuracy',
@@ -27,9 +27,9 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 px-4 mb-4">
-             <h3 className="text-lg font-headline text-right">Weapon 1</h3>
+             <h3 className="text-lg font-headline text-right">{data.weapon1Stats.name || 'Weapon 1'}</h3>
              <div></div>
-             <h3 className="text-lg font-headline text-left">Weapon 2</h3>
+             <h3 className="text-lg font-headline text-left">{data.weapon2Stats.name || 'Weapon 2'}</h3>
           </div>
 
           <div className="space-y-5">

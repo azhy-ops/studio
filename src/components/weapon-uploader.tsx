@@ -2,21 +2,24 @@
 
 import Image from 'next/image';
 import type { ChangeEvent } from 'react';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 interface WeaponUploaderProps {
   weaponNumber: 1 | 2;
   previewUrl: string | null;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  weaponName: string;
+  onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
-const WeaponUploader = ({ weaponNumber, previewUrl, onFileChange }: WeaponUploaderProps) => {
+const WeaponUploader = ({ weaponNumber, previewUrl, onFileChange, weaponName, onNameChange }: WeaponUploaderProps) => {
   const inputId = `file-upload-${weaponNumber}`;
 
   return (
     <Card className="flex flex-col items-center justify-center transition-all hover:border-accent">
-      <CardContent className="p-4 w-full">
+      <CardContent className="p-4 w-full space-y-2">
         <label
           htmlFor={inputId}
           className="relative flex flex-col items-center justify-center w-full aspect-[16/9] border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition-colors"
@@ -45,6 +48,16 @@ const WeaponUploader = ({ weaponNumber, previewUrl, onFileChange }: WeaponUpload
             accept="image/png, image/jpeg, image/webp"
           />
         </label>
+        <div className="relative">
+          <Input
+            type="text"
+            placeholder={`Weapon ${weaponNumber} Name`}
+            value={weaponName}
+            onChange={onNameChange}
+            className="pr-8"
+          />
+          <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        </div>
       </CardContent>
     </Card>
   );
