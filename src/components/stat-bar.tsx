@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { StatIcon } from './stat-icons';
+import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 
 interface StatBarProps {
   statName: string;
@@ -18,6 +19,10 @@ const StatBar = ({ statName, value1, value2, unit }: StatBarProps) => {
   const bar2Width = Math.min((value2 / maxStatValue) * 100, 100);
 
   const normalizedStatName = statName.toLowerCase().replace(/\s/g, '');
+
+  const percentageDiff = Math.round(
+    ((value1 - value2) / Math.max(value1, value2, 1)) * 100
+  );
 
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
@@ -39,8 +44,24 @@ const StatBar = ({ statName, value1, value2, unit }: StatBarProps) => {
         </div>
       </div>
 
-      {/* Stat Name and Icon */}
+      {/* Stat Name, Icon, and Percentage Difference */}
       <div className="flex flex-col items-center text-center">
+        <div className="flex items-center justify-center h-6">
+          {percentageDiff !== 0 && (
+            <div
+              className={cn(
+                'flex items-center text-xs font-bold',
+                percentageDiff > 0 ? 'text-green-400' : 'text-red-400'
+              )}
+            >
+              {percentageDiff > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+              <span>{Math.abs(percentageDiff)}%</span>
+            </div>
+          )}
+          {percentageDiff === 0 && (
+             <Minus className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
         <StatIcon name={normalizedStatName} className="h-6 w-6 text-muted-foreground" />
         <span className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {statName}
