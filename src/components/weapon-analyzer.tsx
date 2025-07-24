@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -6,13 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { analyzeWeapon } from '@/ai/flows/analyze-weapon';
-import type { AnalyzeWeaponOutput, WeaponStats } from '@/ai/schemas/weapon-stats';
+import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Badge } from './ui/badge';
-import { List, Timer, ShieldCheck, ShieldPlus, ShieldAlert } from 'lucide-react';
+import { List, ShieldCheck, ShieldPlus, ShieldAlert } from 'lucide-react';
 
-const statDisplayOrder: (keyof Omit<AnalyzeWeaponOutput['stats'], 'name' | 'handling' | 'mobility' | 'ttk'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'handling' | 'mobility' | 'ttk'>)[] = [
   'damage',
   'fireRate',
   'range',
@@ -22,15 +22,12 @@ const statDisplayOrder: (keyof Omit<AnalyzeWeaponOutput['stats'], 'name' | 'hand
   'muzzleVelocity',
 ];
 
-const statLabels: Record<typeof statDisplayOrder[number], string> = {
-  damage: 'Damage',
-  fireRate: 'Fire Rate',
-  range: 'Range',
-  accuracy: 'Accuracy',
-  control: 'Control',
-  stability: 'Stability',
-  muzzleVelocity: 'Muzzle Velocity',
-};
+interface AnalysisOutput {
+    stats: WeaponStats;
+    recommendedRanges: string[];
+    summaryPoints: { point: string; type: 'strength' | 'secondary-strength' | 'weakness'}[];
+}
+
 
 // --- Rule-based analysis logic ---
 
@@ -101,7 +98,7 @@ const getRecommendedRanges = (scores: { shortRangeScore: number; midRangeScore: 
     return ["Most suited for Long Range"];
 };
 
-const runRuleBasedAnalysis = (stats: WeaponStats): Omit<AnalyzeWeaponOutput, 'ttkSummary'> => {
+const runRuleBasedAnalysis = (stats: WeaponStats): AnalysisOutput => {
     const scores = calculateScores(stats);
     const recommendedRanges = getRecommendedRanges(scores);
     const summaryPoints = getSummaryPoints(stats);
@@ -146,7 +143,7 @@ const pointTypeIcons: Record<string, React.ReactNode> = {
     weakness: <ShieldAlert className="h-5 w-5 text-red-400" />,
 };
 
-function AnalysisResult({ data }: { data: Omit<AnalyzeWeaponOutput, 'ttkSummary'> }) {
+function AnalysisResult({ data }: { data: AnalysisOutput }) {
   
   return (
     <Card className="w-full bg-card/50 backdrop-blur-sm animate-in fade-in-0 duration-500">
@@ -186,7 +183,7 @@ export default function WeaponAnalyzer() {
   const [weaponDataUri, setWeaponDataUri] = useState<string | null>(null);
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
   const [weaponName, setWeaponName] = useState('');
-  const [analysisResult, setAnalysisResult] = useState<Omit<AnalyzeWeaponOutput, 'ttkSummary'> | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -218,15 +215,15 @@ export default function WeaponAnalyzer() {
     setAnalysisResult(null);
 
     try {
-      // Step 1: Use the AI flow for OCR extraction only
-      const ocrResult = await analyzeWeapon({ weaponPhotoDataUri: weaponDataUri });
+      // Step 1: Use Tesseract for OCR extraction
+      const ocrResult = await extractStatsFromImage(weaponDataUri);
       
-      if (ocrResult.stats.name && ocrResult.stats.name !== 'Unknown Weapon') {
-          setWeaponName(ocrResult.stats.name);
+      if (ocrResult.name && ocrResult.name !== 'Unknown Weapon') {
+          setWeaponName(ocrResult.name);
       }
       
       // Step 2: Run the local rule-based analysis
-      const result = runRuleBasedAnalysis(ocrResult.stats);
+      const result = runRuleBasedAnalysis(ocrResult);
       setAnalysisResult(result);
 
     } catch (e) {

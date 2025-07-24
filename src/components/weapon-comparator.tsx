@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -8,11 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { extractWeaponStats } from '@/ai/flows/extract-weapon-stats';
-import type { ExtractWeaponStatsOutput } from '@/ai/schemas/weapon-stats';
+import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
+
+interface ComparatorStats {
+    weapon1Stats: WeaponStats;
+    weapon2Stats: WeaponStats;
+}
 
 function StatsComparisonSkeleton() {
   return (
@@ -50,7 +55,7 @@ export default function WeaponComparator() {
   const [weapon1Name, setWeapon1Name] = useState('');
   const [weapon2Name, setWeapon2Name] = useState('');
 
-  const [stats, setStats] = useState<ExtractWeaponStatsOutput | null>(null);
+  const [stats, setStats] = useState<ComparatorStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -92,10 +97,13 @@ export default function WeaponComparator() {
     setStats(null);
 
     try {
-      const result = await extractWeaponStats({
-        weapon1PhotoDataUri: weapon1DataUri,
-        weapon2PhotoDataUri: weapon2DataUri,
-      });
+      const [weapon1Stats, weapon2Stats] = await Promise.all([
+        extractStatsFromImage(weapon1DataUri),
+        extractStatsFromImage(weapon2DataUri),
+      ]);
+      
+      const result = { weapon1Stats, weapon2Stats };
+
       setStats(result);
       setWeapon1Name(result.weapon1Stats.name);
       setWeapon2Name(result.weapon2Stats.name);

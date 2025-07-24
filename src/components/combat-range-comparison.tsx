@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
-import type { ExtractWeaponStatsOutput } from '@/ai/schemas/weapon-stats';
+import type { WeaponStats } from '@/lib/ocr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from '@/components/ui/progress';
@@ -9,11 +10,15 @@ import { cn } from '@/lib/utils';
 import { Trophy } from 'lucide-react';
 
 type CombatRange = "Close Range" | "Mid Range" | "Long Range";
-type WeaponStats = ExtractWeaponStatsOutput['weapon1Stats'];
+
+interface ComparatorStats {
+    weapon1Stats: WeaponStats;
+    weapon2Stats: WeaponStats;
+}
 
 const normalizeStat = (value: number, max: number) => (value / max) * 100;
 
-const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name'>, number>> = {
+const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk'>, number>> = {
     "Close Range": {
         damage: 0.1,
         range: 0,
@@ -67,7 +72,7 @@ const calculateScore = (stats: WeaponStats, range: CombatRange): number => {
 };
 
 interface CombatRangeComparisonProps {
-  data: ExtractWeaponStatsOutput;
+  data: ComparatorStats;
 }
 
 const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {

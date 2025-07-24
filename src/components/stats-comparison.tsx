@@ -1,16 +1,20 @@
 
 "use client";
 
-import type { ExtractWeaponStatsOutput } from '@/ai/schemas/weapon-stats';
+import type { WeaponStats } from '@/lib/ocr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatBarComparison } from './stat-bar';
 import { Badge } from './ui/badge';
 
+interface ComparatorStats {
+    weapon1Stats: WeaponStats;
+    weapon2Stats: WeaponStats;
+}
 interface StatsComparisonProps {
-  data: ExtractWeaponStatsOutput;
+  data: ComparatorStats;
 }
 
-const statDisplayOrder: (keyof Omit<ExtractWeaponStatsOutput['weapon1Stats'], 'name' | 'handling' | 'ttk'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'handling' | 'ttk'>)[] = [
   'damage',
   'fireRate',
   'range',
