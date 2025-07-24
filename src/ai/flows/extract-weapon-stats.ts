@@ -34,6 +34,8 @@ const WeaponStatsSchema = z.object({
     control: z.number().describe('The control stat of the weapon.'),
     mobility: z.number().describe('The mobility stat of the weapon.'),
     handling: z.number().describe('The handling stat of the weapon. This should be the same as the mobility stat.'),
+    fireRate: z.number().describe('The fire rate of the weapon (in RPM).'),
+    muzzleVelocity: z.number().describe('The muzzle velocity of the weapon (in m/s).'),
 });
 
 const ExtractWeaponStatsOutputSchema = z.object({
@@ -53,6 +55,8 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert game analyst specializing in extracting weapon stats from screenshots using OCR. The weapon's name is typically found at the top of the image in a larger or bold font.
 
 You will use this information to extract the stats and name of both weapons. If a weapon name cannot be determined, return "Unknown Weapon". For the 'handling' stat, use the value from the 'mobility' stat.
+
+Extract the following stats: Damage, Stability, Range, Accuracy, Control, Mobility, Fire Rate (in RPM), and Muzzle Velocity (in m/s).
 
 Use the following as the primary source of information about the weapons.
 

@@ -7,12 +7,13 @@ interface StatBarProps {
   statName: string;
   value1: number;
   value2: number;
+  unit?: string;
 }
 
-const StatBar = ({ statName, value1, value2 }: StatBarProps) => {
+const StatBar = ({ statName, value1, value2, unit }: StatBarProps) => {
   const is1Superior = value1 > value2;
   const is2Superior = value2 > value1;
-  const maxStatValue = 100; // Assume stats are out of 100 for normalization
+  const maxStatValue = statName === 'Fire Rate' || statName === 'Muzzle Velocity' ? 1200 : 100;
   const bar1Width = Math.min((value1 / maxStatValue) * 100, 100);
   const bar2Width = Math.min((value2 / maxStatValue) * 100, 100);
 
@@ -43,6 +44,7 @@ const StatBar = ({ statName, value1, value2 }: StatBarProps) => {
         <StatIcon name={normalizedStatName} className="h-6 w-6 text-muted-foreground" />
         <span className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {statName}
+          {unit && <span className="ml-1 opacity-70">({unit})</span>}
         </span>
       </div>
 

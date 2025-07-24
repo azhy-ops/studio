@@ -1,4 +1,4 @@
-import { Sword, Anchor, Scaling, Crosshair, Gamepad2, Wind, ShieldQuestion } from 'lucide-react';
+import { Sword, Anchor, Scaling, Crosshair, Gamepad2, Wind, ShieldQuestion, Zap, ChevronsRight } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -9,6 +9,8 @@ const statIconsList: { [key: string]: ComponentType<LucideProps> } = {
   accuracy: Crosshair,
   control: Gamepad2,
   mobility: Wind,
+  firerate: Zap,
+  muzzlevelocity: ChevronsRight,
 };
 
 export function StatIcon({ name, ...props }: { name: string } & LucideProps) {

@@ -10,11 +10,13 @@ interface StatsComparisonProps {
 
 const statDisplayOrder: (keyof Omit<ExtractWeaponStatsOutput['weapon1Stats'], 'name' | 'handling'>)[] = [
   'damage',
+  'fireRate',
   'range',
   'accuracy',
   'control',
   'stability',
   'mobility',
+  'muzzleVelocity',
 ];
 
 const StatsComparison = ({ data }: StatsComparisonProps) => {
@@ -43,6 +45,10 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
               }
 
               const formattedStatName = statName.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+              let unit: string | undefined;
+              if (statName === 'fireRate') unit = 'RPM';
+              if (statName === 'muzzleVelocity') unit = 'm/s';
+
 
               return (
                  <div key={statName} className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
@@ -50,6 +56,7 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
                       statName={formattedStatName}
                       value1={value1}
                       value2={value2}
+                      unit={unit}
                     />
                  </div>
               );

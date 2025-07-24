@@ -11,42 +11,57 @@ import { Trophy } from 'lucide-react';
 type CombatRange = "Close Range" | "Mid Range" | "Long Range";
 type WeaponStats = ExtractWeaponStatsOutput['weapon1Stats'];
 
+const normalizeStat = (value: number, max: number) => (value / max) * 100;
+
 const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name'>, number>> = {
-  "Close Range": {
-    damage: 0.1,
-    range: 0,
-    accuracy: 0.1,
-    control: 0.2,
-    stability: 0.25,
-    mobility: 0,
-    handling: 0.35,
-  },
-  "Mid Range": {
-    damage: 0.2,
-    range: 0.15,
-    accuracy: 0.25,
-    control: 0.3,
-    stability: 0.1,
-    mobility: 0,
-    handling: 0,
-  },
-  "Long Range": {
-    damage: 0.1,
-    range: 0.35,
-    accuracy: 0.25,
-    control: 0.2,
-    stability: 0.1,
-    mobility: 0,
-    handling: 0,
-  },
+    "Close Range": {
+        damage: 0.1,
+        range: 0,
+        accuracy: 0.1,
+        control: 0.15,
+        stability: 0.15,
+        mobility: 0,
+        handling: 0.25,
+        fireRate: 0.2,
+        muzzleVelocity: 0.05,
+    },
+    "Mid Range": {
+        damage: 0.2,
+        range: 0.15,
+        accuracy: 0.2,
+        control: 0.2,
+        stability: 0.1,
+        mobility: 0,
+        handling: 0,
+        fireRate: 0.1,
+        muzzleVelocity: 0.05,
+    },
+    "Long Range": {
+        damage: 0.1,
+        range: 0.25,
+        accuracy: 0.2,
+        control: 0.15,
+        stability: 0.1,
+        mobility: 0,
+        handling: 0,
+        fireRate: 0.05,
+        muzzleVelocity: 0.15,
+    },
 };
 
 const calculateScore = (stats: WeaponStats, range: CombatRange): number => {
   const formula = formulas[range];
   let score = 0;
+  
+  const normalizedStats = {
+    ...stats,
+    fireRate: normalizeStat(stats.fireRate, 1200),
+    muzzleVelocity: normalizeStat(stats.muzzleVelocity, 1200),
+  };
+
   for (const key in formula) {
     const statKey = key as keyof typeof formula;
-    score += (stats[statKey] || 0) * formula[statKey];
+    score += (normalizedStats[statKey] || 0) * formula[statKey];
   }
   return parseFloat(score.toFixed(2));
 };
