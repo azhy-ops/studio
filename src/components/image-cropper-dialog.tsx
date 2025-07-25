@@ -1,0 +1,80 @@
+
+"use client";
+
+import { useEffect, useRef, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+
+declare global {
+    interface Window {
+        Cropper: any;
+    }
+}
+
+interface ImageCropperDialogProps {
+  src: string;
+  onCropComplete: (croppedDataUrl: string) => void;
+  onClose: () => void;
+}
+
+export function ImageCropperDialog({ src, onCropComplete, onClose }: ImageCropperDialogProps) {
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [cropper, setCropper] = useState<any>(null);
+
+  useEffect(() => {
+    if (imageRef.current && !cropper) {
+      const cropperInstance = new window.Cropper(imageRef.current, {
+        aspectRatio: 16 / 9,
+        viewMode: 2,
+        autoCropArea: 0.9,
+        dragMode: 'move',
+        guides: true,
+        background: false,
+      });
+      setCropper(cropperInstance);
+    }
+
+    return () => {
+      if (cropper) {
+        cropper.destroy();
+        setCropper(null);
+      }
+    };
+  }, [src, cropper]);
+
+  const handleCrop = () => {
+    if (cropper) {
+      const croppedCanvas = cropper.getCroppedCanvas();
+      if (croppedCanvas) {
+        onCropComplete(croppedCanvas.toDataURL());
+      }
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Crop Image</DialogTitle>
+          <DialogDescription>
+            Adjust the selection to focus only on the weapon's stats area for best results.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[60vh] overflow-hidden">
+          <img ref={imageRef} src={src} alt="Source for cropping" style={{ maxWidth: '100%' }} />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleCrop}>Crop & Analyze</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
