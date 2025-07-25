@@ -42,9 +42,10 @@ const StatInput = ({ label, value, onChange }: { label: string; value: number; o
         <Input
             id={label.toLowerCase()}
             type="number"
-            value={value}
+            value={value || ''}
             onChange={onChange}
             className='h-8 text-sm'
+            placeholder="0"
         />
     </div>
 )
