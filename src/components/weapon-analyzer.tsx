@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, useMemo } from 'react';
+import { useState, useTransition } from 'react';
 import type { ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -122,7 +122,7 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
 }
 
 export default function WeaponAnalyzer() {
-  const [cropState, setCropState] = useState<{ src: string; } | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
   const [weaponStats, setWeaponStats] = useState<WeaponStats | null>(null);
 
@@ -141,7 +141,7 @@ export default function WeaponAnalyzer() {
         setAnalysisResult(null);
         setWeaponStats(null);
         setWeaponPreview(null);
-        setCropState({ src: dataUrl });
+        setCropSrc(dataUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -149,7 +149,7 @@ export default function WeaponAnalyzer() {
   };
   
   const handleCropComplete = async (croppedDataUrl: string) => {
-    setCropState(null);
+    setCropSrc(null);
     setIsProcessing(true);
     setWeaponPreview(croppedDataUrl);
     
@@ -217,11 +217,11 @@ export default function WeaponAnalyzer() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
-        {cropState && (
+        {cropSrc && (
             <ImageCropperDialog
-              src={cropState.src}
+              src={cropSrc}
               onCropComplete={handleCropComplete}
-              onClose={() => setCropState(null)}
+              onClose={() => setCropSrc(null)}
               isProcessing={isProcessing}
             />
         )}
@@ -258,5 +258,3 @@ export default function WeaponAnalyzer() {
     </div>
   );
 }
-
-    
