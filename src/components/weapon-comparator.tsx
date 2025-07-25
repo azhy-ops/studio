@@ -6,7 +6,6 @@ import type { ChangeEvent } from 'react';
 import { Dices } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import StatsComparison from '@/components/stats-comparison';
@@ -32,12 +31,20 @@ export default function WeaponComparator() {
   const [isProcessing, setIsProcessing] = useState<false | 1 | 2>(false);
   const { toast } = useToast();
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
           setImageToCrop({ src: reader.result as string, weapon: weaponNumber });
+          setStats(null);
+          if (weaponNumber === 1) {
+            setWeapon1Stats(null);
+            setWeapon1Preview(null);
+          } else {
+            setWeapon2Stats(null);
+            setWeapon2Preview(null);
+          }
       };
       reader.readAsDataURL(file);
     }
@@ -46,23 +53,22 @@ export default function WeaponComparator() {
 
   const handleCropComplete = async (croppedDataUrl: string, weaponNumber: 1 | 2) => {
     setIsProcessing(weaponNumber);
-    setStats(null); // Clear previous comparison results
+    setStats(null); 
     
-    // Set preview image and clear old stats
     if (weaponNumber === 1) {
         setWeapon1Preview(croppedDataUrl);
-        setWeapon1Stats(null);
     } else {
         setWeapon2Preview(croppedDataUrl);
-        setWeapon2Stats(null);
     }
 
     try {
-        const extractedStats = await extractStatsFromImage(croppedDataUrl);
+        const { name, ...extractedStats } = await extractStatsFromImage(croppedDataUrl);
+        const extractedName = name || 'Unknown Weapon';
+        
         if (weaponNumber === 1) {
-            setWeapon1Stats(extractedStats);
+            setWeapon1Stats({ name: extractedName, ...extractedStats });
         } else {
-            setWeapon2Stats(extractedStats);
+            setWeapon2Stats({ name: extractedName, ...extractedStats });
         }
     } catch (err) {
         console.error(err);
@@ -71,7 +77,7 @@ export default function WeaponComparator() {
         else setWeapon2Preview(null);
     } finally {
         setIsProcessing(false);
-        setImageToCrop(null); // Close the dialog
+        setImageToCrop(null);
     }
   };
   
@@ -103,18 +109,15 @@ export default function WeaponComparator() {
     const numericValue = parseInt(value, 10);
     if (isNaN(numericValue)) return;
 
-    if (weaponNumber === 1 && weapon1Stats) {
-        const updatedStats = {...weapon1Stats, [statName]: numericValue};
+    const statsToUpdate = weaponNumber === 1 ? weapon1Stats : weapon2Stats;
+    const setStatsToUpdate = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
+
+    if (statsToUpdate) {
+        const updatedStats = {...statsToUpdate, [statName]: numericValue};
         if (statName === 'damage' || statName === 'fireRate') {
             updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
         }
-        setWeapon1Stats(updatedStats);
-    } else if (weaponNumber === 2 && weapon2Stats) {
-        const updatedStats = {...weapon2Stats, [statName]: numericValue};
-         if (statName === 'damage' || statName === 'fireRate') {
-            updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
-        }
-        setWeapon2Stats(updatedStats);
+        setStatsToUpdate(updatedStats);
     }
   };
 

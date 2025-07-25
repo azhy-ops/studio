@@ -32,9 +32,7 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
   const [isCropperReady, setIsCropperReady] = useState(false);
 
   useEffect(() => {
-    // Ensure the window and Cropper object are available.
     if (typeof window !== 'undefined' && window.Cropper && imageRef.current && src) {
-      // Destroy previous instance if it exists
       if (cropperRef.current) {
         cropperRef.current.destroy();
       }
@@ -56,6 +54,7 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
     return () => {
       if (cropperRef.current) {
         cropperRef.current.destroy();
+        cropperRef.current = null;
       }
     };
   }, [src]);
@@ -64,7 +63,8 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
     if (cropperRef.current) {
       const croppedCanvas = cropperRef.current.getCroppedCanvas();
       if (croppedCanvas) {
-        onCropComplete(croppedCanvas.toDataURL());
+        const dataUrl = croppedCanvas.toDataURL('image/png');
+        onCropComplete(dataUrl);
       }
     }
   };

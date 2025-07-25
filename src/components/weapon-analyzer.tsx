@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import type { ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Badge } from './ui/badge';
-import { List, ShieldCheck, ShieldPlus, ShieldAlert } from 'lucide-react';
+import { List, ShieldCheck, ShieldPlus, ShieldAlert, Loader2 } from 'lucide-react';
 import { ImageCropperDialog } from './image-cropper-dialog';
 
 
@@ -36,32 +36,33 @@ const getSummaryPoints = (stats: WeaponStats): { point: string; type: 'strength'
     const points: { point: string; type: 'strength' | 'secondary-strength' | 'weakness' }[] = [];
     const statKeys = Object.keys(statDescriptions) as (keyof typeof statDescriptions)[];
 
-    // Create a copy of stats for normalization
     const normalizedStats = { ...stats };
     normalizedStats.fireRate = Math.min(stats.fireRate / 12, 100);
     normalizedStats.muzzleVelocity = Math.min(stats.muzzleVelocity / 12, 100);
-
 
     for (const key of statKeys) {
         if (!Object.prototype.hasOwnProperty.call(stats, key)) continue;
         const value = normalizedStats[key as keyof WeaponStats];
         if (typeof value !== 'number') continue;
 
-        if (value >= 75) {
-            points.push({ point: `High ${statDescriptions[key]} – great for its class.`, type: 'strength' });
-        } else if (value >= 50) {
-            points.push({ point: `Moderate ${statDescriptions[key]} – usable in most scenarios.`, type: 'secondary-strength' });
-        } else {
-            points.push({ point: `Low ${statDescriptions[key]} – may struggle where this is critical.`, type: 'weakness' });
+        if (value >= 80) {
+            points.push({ point: `Exceptional ${statDescriptions[key]}.`, type: 'strength' });
+        } else if (value >= 60) {
+            points.push({ point: `Strong ${statDescriptions[key]}.`, type: 'secondary-strength' });
+        } else if (value <= 30) {
+            points.push({ point: `Low ${statDescriptions[key]}.`, type: 'weakness' });
         }
     }
-    return points.slice(0, 7);
+    return points.sort((a,b) => {
+        const order = { 'strength': 1, 'secondary-strength': 2, 'weakness': 3 };
+        return order[a.type] - order[b.type];
+    }).slice(0, 5);
 };
 
 const calculateScores = (stats: WeaponStats) => {
-    const s = { ...stats }; // Create a mutable copy
-    s.fireRate = Math.min(s.fireRate / 12, 100); // Normalize fire rate
-    s.muzzleVelocity = Math.min(s.muzzleVelocity / 12, 100); // Normalize muzzle velocity
+    const s = { ...stats }; 
+    s.fireRate = Math.min(s.fireRate / 12, 100); 
+    s.muzzleVelocity = Math.min(s.muzzleVelocity / 12, 100);
 
     const shortRangeScore = 
         s.damage * 0.20 + s.fireRate * 0.20 + s.handling * 0.15 + s.control * 0.15 + 
@@ -82,29 +83,19 @@ const calculateScores = (stats: WeaponStats) => {
 
 const getRecommendedRanges = (scores: { shortRangeScore: number; midRangeScore: number; longRangeScore: number }): string[] => {
     const ranges: string[] = [];
-    if (scores.shortRangeScore >= 65) ranges.push("Short Range");
+    if (scores.shortRangeScore >= 65) ranges.push("Close Range");
     if (scores.midRangeScore >= 65) ranges.push("Mid Range");
     if (scores.longRangeScore >= 65) ranges.push("Long Range");
 
     if (ranges.length > 0) return ranges;
 
-    const highestScore = Math.max(scores.shortRangeScore, scores.midRangeScore, scores.longRangeScore);
-    if (highestScore === scores.shortRangeScore) return ["Most suited for Short Range"];
-    if (highestScore === scores.midRangeScore) return ["Most suited for Mid Range"];
-    return ["Most suited for Long Range"];
+    const allScores = { "Close Range": scores.shortRangeScore, "Mid Range": scores.midRangeScore, "Long Range": scores.longRangeScore };
+    const highestScore = Math.max(...Object.values(allScores));
+    const bestRange = Object.keys(allScores).find(range => allScores[range as keyof typeof allScores] === highestScore);
+    
+    return [`Suited for ${bestRange}`];
 };
 
-const runRuleBasedAnalysis = (stats: WeaponStats): AnalysisOutput => {
-    const scores = calculateScores(stats);
-    const recommendedRanges = getRecommendedRanges(scores);
-    const summaryPoints = getSummaryPoints(stats);
-
-    return {
-        stats,
-        recommendedRanges,
-        summaryPoints,
-    };
-};
 
 function AnalysisSkeleton() {
     return (
@@ -145,7 +136,7 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
       <CardHeader>
         <CardTitle className="font-headline text-3xl sm:text-4xl">{data.stats.name}</CardTitle>
         <CardDescription>
-          A tactical breakdown of the {data.stats.name}'s performance characteristics.
+          A tactical breakdown of this weapon's performance characteristics.
         </CardDescription>
         <div className="flex flex-wrap items-center gap-2 pt-2">
             <span className='text-sm font-medium text-muted-foreground'>Best for:</span>
@@ -181,15 +172,19 @@ export default function WeaponAnalyzer() {
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [isProcessingCrop, setIsProcessingCrop] = useState(false);
   const { toast } = useToast();
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImageToCrop(reader.result as string);
+        setAnalysisResult(null);
+        setWeaponStats(null);
+        setWeaponPreview(null);
       };
       reader.readAsDataURL(file);
     }
@@ -198,13 +193,12 @@ export default function WeaponAnalyzer() {
   
   const handleCropComplete = async (croppedDataUrl: string) => {
       setIsProcessingCrop(true);
-      setAnalysisResult(null);
-      setWeaponStats(null);
       setWeaponPreview(croppedDataUrl);
 
       try {
-          const extractedStats = await extractStatsFromImage(croppedDataUrl);
-          setWeaponStats(extractedStats);
+          const { name, ...stats} = await extractStatsFromImage(croppedDataUrl);
+          const extractedName = name || 'Unknown Weapon';
+          setWeaponStats({ name: extractedName, ...stats });
       } catch(err) {
           console.error(err);
           toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please try cropping again or enter stats manually.', variant: 'destructive' });
@@ -217,8 +211,9 @@ export default function WeaponAnalyzer() {
 
 
   const handleStatChange = (statName: keyof WeaponStats, value: string) => {
+    if (!weaponStats) return;
     const numericValue = parseInt(value, 10);
-    if (isNaN(numericValue) || !weaponStats) return;
+    if (isNaN(numericValue)) return;
 
     const updatedStats = {...weaponStats, [statName]: numericValue};
     if (statName === 'damage' || statName === 'fireRate') {
@@ -254,21 +249,19 @@ export default function WeaponAnalyzer() {
     setIsLoading(true);
     setAnalysisResult(null);
 
-    try {
-      // Use a small delay to allow the UI to update to the loading state
-      await new Promise(resolve => setTimeout(resolve, 50));
-      const result = runRuleBasedAnalysis(weaponStats);
-      setAnalysisResult(result);
-    } catch (e) {
-      console.error(e);
-      toast({
-        title: 'Analysis Failed',
-        description: 'An unexpected error occurred during analysis.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    startTransition(() => {
+        const scores = calculateScores(weaponStats);
+        const recommendedRanges = getRecommendedRanges(scores);
+        const summaryPoints = getSummaryPoints(weaponStats);
+        
+        setAnalysisResult({
+            stats: weaponStats,
+            recommendedRanges,
+            summaryPoints,
+        });
+
+        setIsLoading(false);
+    });
   };
   
   const handleCropperClose = () => {
@@ -303,16 +296,17 @@ export default function WeaponAnalyzer() {
             <Button
                 size="lg"
                 onClick={handleAnalyze}
-                disabled={!weaponStats || isLoading || isProcessingCrop}
+                disabled={!weaponStats || isLoading || isPending || isProcessingCrop}
                 className="font-headline text-lg"
             >
-                {isLoading ? 'Analyzing...' : 'Analyze Weapon'}
+                {(isLoading || isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {(isLoading || isPending) ? 'Analyzing...' : 'Analyze Weapon'}
             </Button>
         </div>
         
         <div className="w-full">
-            {isLoading && analysisResult === null && <AnalysisSkeleton />}
-            {analysisResult && !isLoading && <AnalysisResult data={analysisResult} />}
+            {(isLoading || isPending) && analysisResult === null && <AnalysisSkeleton />}
+            {analysisResult && !(isLoading || isPending) && <AnalysisResult data={analysisResult} />}
         </div>
     </div>
   );
