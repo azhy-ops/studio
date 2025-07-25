@@ -181,6 +181,7 @@ export default function WeaponAnalyzer() {
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingCrop, setIsProcessingCrop] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -196,10 +197,10 @@ export default function WeaponAnalyzer() {
   };
   
   const handleCropComplete = async (croppedDataUrl: string) => {
-      setIsLoading(true);
+      setIsProcessingCrop(true);
       setAnalysisResult(null);
-      setImageToCrop(null);
-      
+      setWeaponStats(null);
+
       URL.revokeObjectURL(weaponPreview || '');
       setWeaponPreview(croppedDataUrl);
 
@@ -211,7 +212,8 @@ export default function WeaponAnalyzer() {
           toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please try cropping again or enter stats manually.', variant: 'destructive' });
           setWeaponPreview(null);
       } finally {
-          setIsLoading(false);
+          setIsProcessingCrop(false);
+          setImageToCrop(null);
       }
   }
 
@@ -255,6 +257,8 @@ export default function WeaponAnalyzer() {
     setAnalysisResult(null);
 
     try {
+      // Use a small delay to allow the UI to update to the loading state
+      await new Promise(resolve => setTimeout(resolve, 50));
       const result = runRuleBasedAnalysis(weaponStats);
       setAnalysisResult(result);
     } catch (e) {
@@ -276,6 +280,7 @@ export default function WeaponAnalyzer() {
                 src={imageToCrop}
                 onCropComplete={handleCropComplete}
                 onClose={() => setImageToCrop(null)}
+                isProcessing={isProcessingCrop}
             />
         )}
         <div className="grid w-full grid-cols-1">
@@ -288,7 +293,7 @@ export default function WeaponAnalyzer() {
                 isSingleUploader={true}
                 stats={weaponStats}
                 onStatChange={handleStatChange}
-                isLoading={isLoading}
+                isLoading={isProcessingCrop}
             />
         </div>
 
@@ -296,7 +301,7 @@ export default function WeaponAnalyzer() {
             <Button
                 size="lg"
                 onClick={handleAnalyze}
-                disabled={!weaponStats || isLoading}
+                disabled={!weaponStats || isLoading || isProcessingCrop}
                 className="font-headline text-lg"
             >
                 {isLoading ? 'Analyzing...' : 'Analyze Weapon'}

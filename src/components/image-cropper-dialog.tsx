@@ -11,6 +11,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 declare global {
     interface Window {
@@ -22,9 +23,10 @@ interface ImageCropperDialogProps {
   src: string;
   onCropComplete: (croppedDataUrl: string) => void;
   onClose: () => void;
+  isProcessing?: boolean;
 }
 
-export function ImageCropperDialog({ src, onCropComplete, onClose }: ImageCropperDialogProps) {
+export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing = false }: ImageCropperDialogProps) {
   const imageRef = useRef<HTMLImageElement>(null);
   const cropperRef = useRef<any>(null);
 
@@ -71,8 +73,11 @@ export function ImageCropperDialog({ src, onCropComplete, onClose }: ImageCroppe
           <img ref={imageRef} src={src} alt="Source for cropping" style={{ maxWidth: '100%' }} />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleCrop}>Crop & Analyze</Button>
+          <Button variant="outline" onClick={onClose} disabled={isProcessing}>Cancel</Button>
+          <Button onClick={handleCrop} disabled={isProcessing}>
+            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isProcessing ? 'Analyzing...' : 'Crop & Analyze'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

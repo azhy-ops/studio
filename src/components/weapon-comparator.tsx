@@ -6,7 +6,7 @@ import type { ChangeEvent } from 'react';
 import { Dices } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
@@ -75,26 +75,32 @@ export default function WeaponComparator() {
 
   const handleCropComplete = async (croppedDataUrl: string, weaponNumber: 1 | 2) => {
     setIsLoading(weaponNumber);
-    setImageToCrop(null);
+    
+    if (weaponNumber === 1) {
+        URL.revokeObjectURL(weapon1Preview || '');
+        setWeapon1Preview(croppedDataUrl);
+        setWeapon1Stats(null);
+    } else {
+        URL.revokeObjectURL(weapon2Preview || '');
+        setWeapon2Preview(croppedDataUrl);
+        setWeapon2Stats(null);
+    }
 
     try {
         const extractedStats = await extractStatsFromImage(croppedDataUrl);
         if (weaponNumber === 1) {
-            URL.revokeObjectURL(weapon1Preview || '');
-            setWeapon1Preview(croppedDataUrl);
             setWeapon1Stats(extractedStats);
         } else {
-            URL.revokeObjectURL(weapon2Preview || '');
-            setWeapon2Preview(croppedDataUrl);
             setWeapon2Stats(extractedStats);
         }
     } catch (err) {
         console.error(err);
-        toast({ title: 'OCR Failed', description: `Could not read stats from the image for Weapon ${weaponNumber}. Please try cropping again.`, variant: 'destructive' });
+        toast({ title: 'OCR Failed', description: `Could not read stats from the image for Weapon ${weaponNumber}. Please try cropping again or enter the stats manually.`, variant: 'destructive' });
         if(weaponNumber === 1) setWeapon1Preview(null);
         else setWeapon2Preview(null);
     } finally {
         setIsLoading(false);
+        setImageToCrop(null);
     }
   };
 
@@ -107,6 +113,14 @@ export default function WeaponComparator() {
         variant: 'destructive',
       });
       return;
+    }
+    if(!weapon1Stats.name || weapon1Stats.name === "Unknown Weapon" || !weapon2Stats.name || weapon2Stats.name === "Unknown Weapon") {
+        toast({
+            title: 'Missing Weapon Name',
+            description: 'Please enter a name for both weapons.',
+            variant: 'destructive',
+        });
+        return;
     }
     setStats({ weapon1Stats, weapon2Stats });
   };
@@ -145,6 +159,7 @@ export default function WeaponComparator() {
             src={imageToCrop.src}
             onCropComplete={(url) => handleCropComplete(url, imageToCrop.weapon)}
             onClose={() => setImageToCrop(null)}
+            isProcessing={isLoading === imageToCrop.weapon}
         />
       )}
       <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
@@ -174,7 +189,7 @@ export default function WeaponComparator() {
         <Button
           size="lg"
           onClick={handleCompare}
-          disabled={!weapon1Stats || !weapon2Stats}
+          disabled={!weapon1Stats || !weapon2Stats || !!isLoading}
           className="font-headline text-lg"
         >
           <Dices className="mr-2 h-5 w-5" />
