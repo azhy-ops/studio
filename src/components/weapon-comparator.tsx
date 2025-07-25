@@ -7,7 +7,6 @@ import { Dices } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import StatsComparison from '@/components/stats-comparison';
@@ -18,34 +17,6 @@ import { ImageCropperDialog } from './image-cropper-dialog';
 interface ComparatorStats {
     weapon1Stats: WeaponStats;
     weapon2Stats: WeaponStats;
-}
-
-function StatsComparisonSkeleton() {
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-center font-headline text-2xl">Comparison</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-            <div className="flex items-center justify-end gap-2">
-              <Skeleton className="h-6 w-8" />
-              <Skeleton className="h-2.5 w-full" />
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <Skeleton className="h-6 w-6 rounded-full" />
-              <Skeleton className="h-3 w-16" />
-            </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-2.5 w-full" />
-              <Skeleton className="h-6 w-8" />
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
 }
 
 export default function WeaponComparator() {
@@ -75,19 +46,13 @@ export default function WeaponComparator() {
 
   const handleCropComplete = async (croppedDataUrl: string, weaponNumber: 1 | 2) => {
     setIsProcessing(weaponNumber);
-    setImageToCrop(null);
-    setStats(null);
+    setStats(null); // Clear previous comparison results
     
+    // Set preview image and clear old stats
     if (weaponNumber === 1) {
-        if (weapon1Preview && weapon1Preview.startsWith('blob:')) {
-          URL.revokeObjectURL(weapon1Preview);
-        }
         setWeapon1Preview(croppedDataUrl);
         setWeapon1Stats(null);
     } else {
-        if (weapon2Preview && weapon2Preview.startsWith('blob:')) {
-          URL.revokeObjectURL(weapon2Preview);
-        }
         setWeapon2Preview(croppedDataUrl);
         setWeapon2Stats(null);
     }
@@ -106,6 +71,7 @@ export default function WeaponComparator() {
         else setWeapon2Preview(null);
     } finally {
         setIsProcessing(false);
+        setImageToCrop(null); // Close the dialog
     }
   };
   

@@ -200,12 +200,7 @@ export default function WeaponAnalyzer() {
       setIsProcessingCrop(true);
       setAnalysisResult(null);
       setWeaponStats(null);
-      
-      if (weaponPreview && weaponPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(weaponPreview);
-      }
       setWeaponPreview(croppedDataUrl);
-      setImageToCrop(null);
 
       try {
           const extractedStats = await extractStatsFromImage(croppedDataUrl);
@@ -216,6 +211,7 @@ export default function WeaponAnalyzer() {
           setWeaponPreview(null);
       } finally {
           setIsProcessingCrop(false);
+          setImageToCrop(null);
       }
   }
 
