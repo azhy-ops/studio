@@ -70,6 +70,7 @@ async function extractStatsFromImage(dataUri: string): Promise<WeaponStats> {
     const accuracy = parseStat(text, 'Accuracy');
     const control = parseStat(text, 'Control');
     const mobility = parseStat(text, 'Mobility');
+    const handling = parseStat(text, 'Handling');
     const fireRate = parseStat(text, 'Fire Rate');
     const muzzleVelocity = parseStat(text, 'Muzzle Velocity');
 
@@ -81,7 +82,7 @@ async function extractStatsFromImage(dataUri: string): Promise<WeaponStats> {
         accuracy,
         control,
         mobility,
-        handling: mobility,
+        handling,
         fireRate,
         muzzleVelocity,
         ttk: 0

@@ -14,12 +14,13 @@ interface StatsComparisonProps {
   data: ComparatorStats;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'handling' | 'ttk'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
   'damage',
   'fireRate',
   'range',
   'accuracy',
   'control',
+  'handling',
   'stability',
   'mobility',
   'muzzleVelocity',

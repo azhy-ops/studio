@@ -24,12 +24,13 @@ interface WeaponUploaderProps {
   children?: ReactNode;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'handling'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
   'damage',
   'fireRate',
   'range',
   'accuracy',
   'control',
+  'handling',
   'stability',
   'mobility',
   'muzzleVelocity',
@@ -129,7 +130,7 @@ const WeaponUploader = ({
 
         {isLoading && (
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 9 }).map((_, i) => (
                     <div key={i} className="grid grid-cols-2 items-center gap-2">
                          <Skeleton className="h-4 w-16 justify-self-end" />
                          <Skeleton className="h-8 w-full" />
