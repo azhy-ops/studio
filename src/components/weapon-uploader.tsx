@@ -69,7 +69,7 @@ const WeaponUploader = ({
     <div className="space-y-3">
        <Alert className="text-sm">
           <AlertDescription>
-            For the best results, please crop your screenshot before uploading. Make sure only the weapon's stats area is clearly visible.
+            Tip: For better stat detection, please crop your image before uploading. Make sure only the weapon stats area is visible.
           </AlertDescription>
         </Alert>
       <Card className="flex flex-col items-center justify-center transition-all hover:border-accent">

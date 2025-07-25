@@ -90,13 +90,13 @@ export default function WeaponComparator() {
   
   const handleStatChange = (weaponNumber: 1 | 2, statName: keyof WeaponStats, value: string) => {
     const numericValue = parseInt(value, 10);
-    if (isNaN(numericValue)) return;
+    if (isNaN(numericValue) && value !== '') return;
 
     const statsToUpdate = weaponNumber === 1 ? weapon1Stats : weapon2Stats;
     const setStatsToUpdate = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
 
     if (statsToUpdate) {
-        const updatedStats = {...statsToUpdate, [statName]: numericValue};
+        const updatedStats = {...statsToUpdate, [statName]: isNaN(numericValue) ? 0 : numericValue};
         if (statName === 'damage' || statName === 'fireRate') {
             updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
         }
