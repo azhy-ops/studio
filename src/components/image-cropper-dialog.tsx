@@ -26,32 +26,32 @@ interface ImageCropperDialogProps {
 
 export function ImageCropperDialog({ src, onCropComplete, onClose }: ImageCropperDialogProps) {
   const imageRef = useRef<HTMLImageElement>(null);
-  const [cropper, setCropper] = useState<any>(null);
+  const cropperRef = useRef<any>(null);
 
   useEffect(() => {
-    if (imageRef.current && !cropper) {
-      const cropperInstance = new window.Cropper(imageRef.current, {
-        aspectRatio: 16 / 9,
-        viewMode: 2,
-        autoCropArea: 0.9,
-        dragMode: 'move',
-        guides: true,
-        background: false,
-      });
-      setCropper(cropperInstance);
+    if (imageRef.current) {
+        const cropperInstance = new window.Cropper(imageRef.current, {
+            aspectRatio: 16 / 9,
+            viewMode: 2,
+            autoCropArea: 0.9,
+            dragMode: 'move',
+            guides: true,
+            background: false,
+        });
+        cropperRef.current = cropperInstance;
     }
 
     return () => {
-      if (cropper) {
-        cropper.destroy();
-        setCropper(null);
-      }
+        if (cropperRef.current) {
+            cropperRef.current.destroy();
+            cropperRef.current = null;
+        }
     };
-  }, [src, cropper]);
+  }, [src]);
 
   const handleCrop = () => {
-    if (cropper) {
-      const croppedCanvas = cropper.getCroppedCanvas();
+    if (cropperRef.current) {
+      const croppedCanvas = cropperRef.current.getCroppedCanvas();
       if (croppedCanvas) {
         onCropComplete(croppedCanvas.toDataURL());
       }
