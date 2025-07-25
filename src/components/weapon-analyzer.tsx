@@ -12,24 +12,11 @@ import WeaponUploader from '@/components/weapon-uploader';
 import { Badge } from './ui/badge';
 import { List, ShieldCheck, ShieldPlus, ShieldAlert } from 'lucide-react';
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'handling' | 'mobility' | 'ttk'>)[] = [
-  'damage',
-  'fireRate',
-  'range',
-  'accuracy',
-  'control',
-  'stability',
-  'muzzleVelocity',
-];
-
 interface AnalysisOutput {
     stats: WeaponStats;
     recommendedRanges: string[];
     summaryPoints: { point: string; type: 'strength' | 'secondary-strength' | 'weakness'}[];
 }
-
-
-// --- Rule-based analysis logic ---
 
 const statDescriptions: Record<string, string> = {
     damage: 'damage per shot',
@@ -47,10 +34,16 @@ const getSummaryPoints = (stats: WeaponStats): { point: string; type: 'strength'
     const points: { point: string; type: 'strength' | 'secondary-strength' | 'weakness' }[] = [];
     const statKeys = Object.keys(statDescriptions) as (keyof typeof statDescriptions)[];
 
+    // Create a copy of stats for normalization
+    const normalizedStats = { ...stats };
+    normalizedStats.fireRate = Math.min(stats.fireRate / 12, 100);
+    normalizedStats.muzzleVelocity = Math.min(stats.muzzleVelocity / 12, 100);
+
+
     for (const key of statKeys) {
-        const value = stats[key as keyof WeaponStats];
+        if (!Object.prototype.hasOwnProperty.call(stats, key)) continue;
+        const value = normalizedStats[key as keyof WeaponStats];
         if (typeof value !== 'number') continue;
-        const name = key.charAt(0).toUpperCase() + key.slice(1);
 
         if (value >= 75) {
             points.push({ point: `High ${statDescriptions[key]} – great for its class.`, type: 'strength' });
@@ -65,6 +58,8 @@ const getSummaryPoints = (stats: WeaponStats): { point: string; type: 'strength'
 
 const calculateScores = (stats: WeaponStats) => {
     const s = { ...stats }; // Create a mutable copy
+    s.fireRate = Math.min(s.fireRate / 12, 100); // Normalize fire rate
+    s.muzzleVelocity = Math.min(s.muzzleVelocity / 12, 100); // Normalize muzzle velocity
 
     const shortRangeScore = 
         s.damage * 0.20 + s.fireRate * 0.20 + s.handling * 0.15 + s.control * 0.15 + 
@@ -91,7 +86,6 @@ const getRecommendedRanges = (scores: { shortRangeScore: number; midRangeScore: 
 
     if (ranges.length > 0) return ranges;
 
-    // If none qualify, find the highest score
     const highestScore = Math.max(scores.shortRangeScore, scores.midRangeScore, scores.longRangeScore);
     if (highestScore === scores.shortRangeScore) return ["Most suited for Short Range"];
     if (highestScore === scores.midRangeScore) return ["Most suited for Mid Range"];
@@ -109,7 +103,6 @@ const runRuleBasedAnalysis = (stats: WeaponStats): AnalysisOutput => {
         summaryPoints,
     };
 };
-// --- End of rule-based analysis logic ---
 
 function AnalysisSkeleton() {
     return (
@@ -182,57 +175,84 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
 export default function WeaponAnalyzer() {
   const [weaponDataUri, setWeaponDataUri] = useState<string | null>(null);
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
-  const [weaponName, setWeaponName] = useState('');
+  const [weaponStats, setWeaponStats] = useState<WeaponStats | null>(null);
+
   const [analysisResult, setAnalysisResult] = useState<AnalysisOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setIsLoading(true);
+      setAnalysisResult(null);
+
       URL.revokeObjectURL(weaponPreview || '');
       setWeaponPreview(URL.createObjectURL(file));
 
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setWeaponDataUri(reader.result as string);
+      reader.onloadend = async () => {
+        const dataUri = reader.result as string;
+        setWeaponDataUri(dataUri);
+        try {
+          const extractedStats = await extractStatsFromImage(dataUri);
+          setWeaponStats(extractedStats);
+        } catch(err) {
+           toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter them manually.', variant: 'destructive' });
+        } finally {
+          setIsLoading(false);
+        }
       };
       reader.readAsDataURL(file);
     }
   };
+  
+  const handleStatChange = (statName: keyof WeaponStats, value: string) => {
+    const numericValue = parseInt(value, 10);
+    if (isNaN(numericValue) || !weaponStats) return;
+
+    const updatedStats = {...weaponStats, [statName]: numericValue};
+    if (statName === 'damage' || statName === 'fireRate') {
+      updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
+    }
+    setWeaponStats(updatedStats);
+  };
+  
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (weaponStats) {
+      setWeaponStats({ ...weaponStats, name: e.target.value });
+    }
+  }
 
   const handleAnalyze = async () => {
-    if (!weaponDataUri) {
+    if (!weaponStats) {
       toast({
-        title: 'Missing Screenshot',
-        description: 'Please upload a screenshot for the weapon.',
+        title: 'Missing Stats',
+        description: 'Please upload a screenshot or enter stats manually.',
         variant: 'destructive',
       });
       return;
+    }
+    if(!weaponStats.name || weaponStats.name === "Unknown Weapon") {
+        toast({
+            title: 'Missing Weapon Name',
+            description: 'Please enter a name for the weapon.',
+            variant: 'destructive',
+        });
+        return;
     }
 
     setIsLoading(true);
     setAnalysisResult(null);
 
     try {
-      // Step 1: Use Tesseract for OCR extraction
-      const ocrResult = await extractStatsFromImage(weaponDataUri);
-      
-      const finalStats = { ...ocrResult, name: weaponName || ocrResult.name };
-
-      if (finalStats.name && finalStats.name !== 'Unknown Weapon') {
-          setWeaponName(finalStats.name);
-      }
-      
-      // Step 2: Run the local rule-based analysis
-      const result = runRuleBasedAnalysis(finalStats);
+      const result = runRuleBasedAnalysis(weaponStats);
       setAnalysisResult(result);
-
     } catch (e) {
       console.error(e);
       toast({
         title: 'Analysis Failed',
-        description: 'Could not read stats from the image. Please try a different screenshot.',
+        description: 'An unexpected error occurred during analysis.',
         variant: 'destructive',
       });
     } finally {
@@ -247,9 +267,12 @@ export default function WeaponAnalyzer() {
                 weaponNumber={1}
                 previewUrl={weaponPreview}
                 onFileChange={handleFileChange}
-                weaponName={weaponName}
-                onNameChange={(e) => setWeaponName(e.target.value)}
+                weaponName={weaponStats?.name || ''}
+                onNameChange={handleNameChange}
                 isSingleUploader={true}
+                stats={weaponStats}
+                onStatChange={handleStatChange}
+                isLoading={isLoading}
             />
         </div>
 
@@ -257,7 +280,7 @@ export default function WeaponAnalyzer() {
             <Button
                 size="lg"
                 onClick={handleAnalyze}
-                disabled={!weaponDataUri || isLoading}
+                disabled={!weaponStats || isLoading}
                 className="font-headline text-lg"
             >
                 {isLoading ? 'Analyzing...' : 'Analyze Weapon'}
@@ -265,7 +288,7 @@ export default function WeaponAnalyzer() {
         </div>
         
         <div className="w-full">
-            {isLoading && <AnalysisSkeleton />}
+            {isLoading && analysisResult === null && <AnalysisSkeleton />}
             {analysisResult && !isLoading && <AnalysisResult data={analysisResult} />}
         </div>
     </div>

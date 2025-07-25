@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createWorker, type Worker } from 'tesseract.js';
@@ -22,7 +23,6 @@ let workerLoading = false;
 async function getWorker() {
     if (worker) return worker;
     if (workerLoading) {
-        // Wait for the worker to be loaded by another call
         return new Promise<Worker>((resolve) => {
             const interval = setInterval(() => {
                 if (worker) {
@@ -41,29 +41,12 @@ async function getWorker() {
 }
 
 function parseStat(text: string, statName: string): number {
-    const regex = new RegExp(`${statName}\\s*(\\d+)`, 'i');
+    const regex = new RegExp(`(?:${statName}|${statName.replace(/([A-Z])/g, ' $1')})\\s*(\\d+)`, 'i');
     const match = text.match(regex);
     if (match && match[1]) {
         return parseInt(match[1], 10);
     }
     return 0;
-}
-
-function parseName(text: string): string {
-    const lines = text.split('\n').map(line => line.trim());
-    // Assume the name is one of the first few non-empty lines and likely in all caps or larger font.
-    // Tesseract may not give us font info, so we can use heuristics.
-    for (const line of lines) {
-        if (line.length > 3 && /^[A-Z0-9\s-]+$/.test(line)) {
-            // A simple heuristic: is it all caps, numbers, spaces, or hyphens?
-            // This is a rough way to find a weapon name.
-            const commonStats = ['DAMAGE', 'STABILITY', 'RANGE', 'ACCURACY', 'CONTROL', 'MOBILITY', 'FIRERATE', 'MUZZLEVELOCITY', 'HANDLING'];
-            if (!commonStats.some(stat => line.toUpperCase().includes(stat))) {
-                return line;
-            }
-        }
-    }
-    return 'Unknown Weapon';
 }
 
 function calculateTTK(damage: number, fireRate: number): number {
@@ -75,17 +58,9 @@ function calculateTTK(damage: number, fireRate: number): number {
 }
 
 
-export async function extractStatsFromImage(dataUri: string): Promise<WeaponStats> {
+async function extractStatsFromImage(dataUri: string): Promise<WeaponStats> {
     const ocrWorker = await getWorker();
 
-    // Extract name from top 15% of the image
-    const nameResult = await ocrWorker.recognize(dataUri, {
-        rectangle: { top: 0, left: 0, width: 2000, height: 300 }, // Assuming image width is not more than 2000px and height is at least 300px
-    });
-    const name = parseName(nameResult.data.text);
-    
-
-    // Extract stats from the whole image
     const result = await ocrWorker.recognize(dataUri);
     const text = result.data.text;
     
@@ -99,7 +74,7 @@ export async function extractStatsFromImage(dataUri: string): Promise<WeaponStat
     const muzzleVelocity = parseStat(text, 'Muzzle Velocity');
 
     const stats: WeaponStats = {
-        name,
+        name: 'Unknown Weapon',
         damage,
         stability,
         range,
@@ -117,7 +92,12 @@ export async function extractStatsFromImage(dataUri: string): Promise<WeaponStat
     return stats;
 }
 
-// Optional: function to terminate the worker if the component unmounts
+extractStatsFromImage.calculateTTK = calculateTTK;
+
+
+export { extractStatsFromImage };
+
+
 export async function terminateWorker() {
     if (worker) {
         await worker.terminate();

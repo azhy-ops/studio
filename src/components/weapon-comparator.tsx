@@ -52,79 +52,87 @@ export default function WeaponComparator() {
   const [weapon2DataUri, setWeapon2DataUri] = useState<string | null>(null);
   const [weapon1Preview, setWeapon1Preview] = useState<string | null>(null);
   const [weapon2Preview, setWeapon2Preview] = useState<string | null>(null);
-  const [weapon1Name, setWeapon1Name] = useState('');
-  const [weapon2Name, setWeapon2Name] = useState('');
-
+  
+  const [weapon1Stats, setWeapon1Stats] = useState<WeaponStats | null>(null);
+  const [weapon2Stats, setWeapon2Stats] = useState<WeaponStats | null>(null);
+  
   const [stats, setStats] = useState<ComparatorStats | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean | number>(false);
   const { toast } = useToast();
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
     const file = e.target.files?.[0];
     if (file) {
+      setIsLoading(weaponNumber);
+      const dataUri = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+      });
+
       if (weaponNumber === 1) {
         URL.revokeObjectURL(weapon1Preview || '');
         setWeapon1Preview(URL.createObjectURL(file));
+        setWeapon1DataUri(dataUri);
+        try {
+          const extractedStats = await extractStatsFromImage(dataUri);
+          setWeapon1Stats(extractedStats);
+        } catch(err) {
+          toast({ title: 'OCR Failed', description: 'Could not read stats from the image for Weapon 1.', variant: 'destructive' });
+        }
       } else {
         URL.revokeObjectURL(weapon2Preview || '');
         setWeapon2Preview(URL.createObjectURL(file));
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUri = reader.result as string;
-        if (weaponNumber === 1) {
-          setWeapon1DataUri(dataUri);
-        } else {
-          setWeapon2DataUri(dataUri);
+        setWeapon2DataUri(dataUri);
+        try {
+          const extractedStats = await extractStatsFromImage(dataUri);
+          setWeapon2Stats(extractedStats);
+        } catch(err) {
+          toast({ title: 'OCR Failed', description: 'Could not read stats from the image for Weapon 2.', variant: 'destructive' });
         }
-      };
-      reader.readAsDataURL(file);
+      }
+      setIsLoading(false);
     }
   };
 
   const handleCompare = async () => {
-    if (!weapon1DataUri || !weapon2DataUri) {
+    if (!weapon1Stats || !weapon2Stats) {
       toast({
-        title: 'Missing Screenshots',
-        description: 'Please upload screenshots for both weapons.',
+        title: 'Missing Stats',
+        description: 'Please upload screenshots and ensure stats are loaded for both weapons.',
         variant: 'destructive',
       });
       return;
     }
+    setStats({ weapon1Stats, weapon2Stats });
+  };
+  
+  const handleStatChange = (weaponNumber: 1 | 2, statName: keyof WeaponStats, value: string) => {
+    const numericValue = parseInt(value, 10);
+    if (isNaN(numericValue)) return;
 
-    setIsLoading(true);
-    setStats(null);
-
-    try {
-      const [weapon1Stats, weapon2Stats] = await Promise.all([
-        extractStatsFromImage(weapon1DataUri),
-        extractStatsFromImage(weapon2DataUri),
-      ]);
-      
-      const result = { 
-        weapon1Stats: { ...weapon1Stats, name: weapon1Name || weapon1Stats.name },
-        weapon2Stats: { ...weapon2Stats, name: weapon2Name || weapon2Stats.name },
-      };
-
-      setStats(result);
-      if (result.weapon1Stats.name && result.weapon1Stats.name !== 'Unknown Weapon') {
-        setWeapon1Name(result.weapon1Stats.name);
-      }
-      if (result.weapon2Stats.name && result.weapon2Stats.name !== 'Unknown Weapon') {
-        setWeapon2Name(result.weapon2Stats.name);
-      }
-    } catch (e) {
-      console.error(e);
-      toast({
-        title: 'Extraction Failed',
-        description: 'Could not read stats from the images. Please try different, clearer screenshots.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+    if (weaponNumber === 1 && weapon1Stats) {
+        const updatedStats = {...weapon1Stats, [statName]: numericValue};
+        if (statName === 'damage' || statName === 'fireRate') {
+            updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
+        }
+        setWeapon1Stats(updatedStats);
+    } else if (weaponNumber === 2 && weapon2Stats) {
+        const updatedStats = {...weapon2Stats, [statName]: numericValue};
+         if (statName === 'damage' || statName === 'fireRate') {
+            updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
+        }
+        setWeapon2Stats(updatedStats);
     }
   };
+
+  const handleNameChange = (weaponNumber: 1 | 2, value: string) => {
+    if (weaponNumber === 1 && weapon1Stats) {
+      setWeapon1Stats({ ...weapon1Stats, name: value });
+    } else if (weaponNumber === 2 && weapon2Stats) {
+      setWeapon2Stats({ ...weapon2Stats, name: value });
+    }
+  }
 
   return (
     <div className="w-full max-w-6xl space-y-8">
@@ -133,15 +141,21 @@ export default function WeaponComparator() {
           weaponNumber={1}
           previewUrl={weapon1Preview}
           onFileChange={(e) => handleFileChange(e, 1)}
-          weaponName={weapon1Name}
-          onNameChange={(e) => setWeapon1Name(e.target.value)}
+          weaponName={weapon1Stats?.name || ''}
+          onNameChange={(e) => handleNameChange(1, e.target.value)}
+          stats={weapon1Stats}
+          onStatChange={(stat, value) => handleStatChange(1, stat, value)}
+          isLoading={isLoading === 1}
         />
         <WeaponUploader
           weaponNumber={2}
           previewUrl={weapon2Preview}
           onFileChange={(e) => handleFileChange(e, 2)}
-          weaponName={weapon2Name}
-          onNameChange={(e) => setWeapon2Name(e.target.value)}
+          weaponName={weapon2Stats?.name || ''}
+          onNameChange={(e) => handleNameChange(2, e.target.value)}
+          stats={weapon2Stats}
+          onStatChange={(stat, value) => handleStatChange(2, stat, value)}
+          isLoading={isLoading === 2}
         />
       </div>
 
@@ -149,17 +163,16 @@ export default function WeaponComparator() {
         <Button
           size="lg"
           onClick={handleCompare}
-          disabled={!weapon1DataUri || !weapon2DataUri || isLoading}
+          disabled={!weapon1Stats || !weapon2Stats}
           className="font-headline text-lg"
         >
           <Dices className="mr-2 h-5 w-5" />
-          {isLoading ? 'Analyzing...' : 'Compare Stats'}
+          {'Compare Stats'}
         </Button>
       </div>
 
       <div className="w-full">
-        {isLoading && <StatsComparisonSkeleton />}
-        {stats && !isLoading && (
+        {stats && (
           <div className="space-y-8">
             <StatsComparison data={stats} />
             <CombatRangeComparison data={stats} />
