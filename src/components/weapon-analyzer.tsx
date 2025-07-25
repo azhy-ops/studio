@@ -11,7 +11,6 @@ import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Badge } from './ui/badge';
 import { List, ShieldCheck, ShieldPlus, ShieldAlert, Loader2 } from 'lucide-react';
-import { ImageCropperDialog } from './image-cropper-dialog';
 
 
 interface AnalysisOutput {
@@ -166,49 +165,41 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
 }
 
 export default function WeaponAnalyzer() {
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
   const [weaponStats, setWeaponStats] = useState<WeaponStats | null>(null);
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [isProcessingCrop, setIsProcessingCrop] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageToCrop(reader.result as string);
+      reader.onloadend = async () => {
+        const dataUrl = reader.result as string;
+        setWeaponPreview(dataUrl);
         setAnalysisResult(null);
         setWeaponStats(null);
-        setWeaponPreview(null);
+        setIsProcessing(true);
+        try {
+          const { name, ...stats } = await extractStatsFromImage(dataUrl);
+          const extractedName = name || 'Unknown Weapon';
+          setWeaponStats({ name: extractedName, ...stats });
+        } catch (err) {
+          console.error(err);
+          toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter stats manually.', variant: 'destructive' });
+          setWeaponPreview(null);
+        } finally {
+          setIsProcessing(false);
+        }
       };
       reader.readAsDataURL(file);
     }
     e.target.value = '';
   };
-  
-  const handleCropComplete = async (croppedDataUrl: string) => {
-      setIsProcessingCrop(true);
-      setWeaponPreview(croppedDataUrl);
-
-      try {
-          const { name, ...stats} = await extractStatsFromImage(croppedDataUrl);
-          const extractedName = name || 'Unknown Weapon';
-          setWeaponStats({ name: extractedName, ...stats });
-      } catch(err) {
-          console.error(err);
-          toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please try cropping again or enter stats manually.', variant: 'destructive' });
-          setWeaponPreview(null);
-      } finally {
-          setIsProcessingCrop(false);
-          setImageToCrop(null);
-      }
-  }
-
 
   const handleStatChange = (statName: keyof WeaponStats, value: string) => {
     if (!weaponStats) return;
@@ -264,20 +255,8 @@ export default function WeaponAnalyzer() {
     });
   };
   
-  const handleCropperClose = () => {
-    setImageToCrop(null);
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
-        {imageToCrop && (
-            <ImageCropperDialog
-                src={imageToCrop}
-                onCropComplete={handleCropComplete}
-                onClose={handleCropperClose}
-                isProcessing={isProcessingCrop}
-            />
-        )}
         <div className="grid w-full grid-cols-1">
             <WeaponUploader
                 weaponNumber={1}
@@ -288,7 +267,7 @@ export default function WeaponAnalyzer() {
                 isSingleUploader={true}
                 stats={weaponStats}
                 onStatChange={handleStatChange}
-                isLoading={isProcessingCrop}
+                isLoading={isProcessing}
             />
         </div>
 
@@ -296,7 +275,7 @@ export default function WeaponAnalyzer() {
             <Button
                 size="lg"
                 onClick={handleAnalyze}
-                disabled={!weaponStats || isLoading || isPending || isProcessingCrop}
+                disabled={!weaponStats || isLoading || isPending || isProcessing}
                 className="font-headline text-lg"
             >
                 {(isLoading || isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

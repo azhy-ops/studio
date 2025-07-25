@@ -11,7 +11,6 @@ import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
-import { ImageCropperDialog } from './image-cropper-dialog';
 
 interface ComparatorStats {
     weapon1Stats: WeaponStats;
@@ -19,8 +18,6 @@ interface ComparatorStats {
 }
 
 export default function WeaponComparator() {
-  const [imageToCrop, setImageToCrop] = useState<{ src: string, weapon: 1 | 2 } | null>(null);
-  
   const [weapon1Preview, setWeapon1Preview] = useState<string | null>(null);
   const [weapon2Preview, setWeapon2Preview] = useState<string | null>(null);
   
@@ -35,54 +32,40 @@ export default function WeaponComparator() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-          setImageToCrop({ src: reader.result as string, weapon: weaponNumber });
-          setStats(null);
-          if (weaponNumber === 1) {
+      reader.onloadend = async () => {
+        const dataUrl = reader.result as string;
+        setIsProcessing(weaponNumber);
+        setStats(null);
+
+        if (weaponNumber === 1) {
+            setWeapon1Preview(dataUrl);
             setWeapon1Stats(null);
-            setWeapon1Preview(null);
-          } else {
+        } else {
+            setWeapon2Preview(dataUrl);
             setWeapon2Stats(null);
-            setWeapon2Preview(null);
-          }
+        }
+
+        try {
+            const { name, ...extractedStats } = await extractStatsFromImage(dataUrl);
+            const extractedName = name || 'Unknown Weapon';
+            
+            if (weaponNumber === 1) {
+                setWeapon1Stats({ name: extractedName, ...extractedStats });
+            } else {
+                setWeapon2Stats({ name: extractedName, ...extractedStats });
+            }
+        } catch (err) {
+            console.error(err);
+            toast({ title: 'OCR Failed', description: `Could not read stats from the image for Weapon ${weaponNumber}. Please enter the stats manually.`, variant: 'destructive' });
+            if(weaponNumber === 1) setWeapon1Preview(null);
+            else setWeapon2Preview(null);
+        } finally {
+            setIsProcessing(false);
+        }
       };
       reader.readAsDataURL(file);
     }
     e.target.value = '';
-  };
-
-  const handleCropComplete = async (croppedDataUrl: string, weaponNumber: 1 | 2) => {
-    setIsProcessing(weaponNumber);
-    setStats(null); 
-    
-    if (weaponNumber === 1) {
-        setWeapon1Preview(croppedDataUrl);
-    } else {
-        setWeapon2Preview(croppedDataUrl);
-    }
-
-    try {
-        const { name, ...extractedStats } = await extractStatsFromImage(croppedDataUrl);
-        const extractedName = name || 'Unknown Weapon';
-        
-        if (weaponNumber === 1) {
-            setWeapon1Stats({ name: extractedName, ...extractedStats });
-        } else {
-            setWeapon2Stats({ name: extractedName, ...extractedStats });
-        }
-    } catch (err) {
-        console.error(err);
-        toast({ title: 'OCR Failed', description: `Could not read stats from the image for Weapon ${weaponNumber}. Please try cropping again or enter the stats manually.`, variant: 'destructive' });
-        if(weaponNumber === 1) setWeapon1Preview(null);
-        else setWeapon2Preview(null);
-    } finally {
-        setIsProcessing(false);
-        setImageToCrop(null);
-    }
-  };
-  
-  const handleCropperClose = () => {
-    setImageToCrop(null);
   };
 
   const handleCompare = async () => {
@@ -131,14 +114,6 @@ export default function WeaponComparator() {
 
   return (
     <div className="w-full max-w-6xl space-y-8">
-       {imageToCrop && (
-        <ImageCropperDialog
-            src={imageToCrop.src}
-            onCropComplete={(url) => handleCropComplete(url, imageToCrop.weapon)}
-            onClose={handleCropperClose}
-            isProcessing={isProcessing === imageToCrop.weapon}
-        />
-      )}
       <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
         <WeaponUploader
           weaponNumber={1}
