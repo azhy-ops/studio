@@ -11,6 +11,8 @@ import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Loader2 } from 'lucide-react';
 import { SimpleStatBar } from './stat-bar';
+import { ImageCropperDialog } from './image-cropper-dialog';
+
 
 interface AnalysisOutput {
     stats: WeaponStats;
@@ -35,7 +37,7 @@ function AnalysisSkeleton() {
                 </div>
             </div>
             <div className='space-y-3 pt-4'>
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 9 }).map((_, i) => (
                     <div key={i} className="flex items-center gap-4">
                         <Skeleton className="h-4 w-28" />
                         <Skeleton className="h-3 w-full" />
@@ -100,11 +102,13 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
             )}
             <div className='space-y-3'>
                 {applicableStats.map((statKey, index) => {
+                    const value = stats[statKey];
+                    if(value === undefined) return null;
                     return (
                         <div key={statKey} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 50}ms`}}>
                             <SimpleStatBar
                                 statName={statKey}
-                                value={stats[statKey]}
+                                value={value}
                                 label={statKey}
                             />
                         </div>
@@ -118,6 +122,7 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
 }
 
 export default function WeaponAnalyzer() {
+  const [cropState, setCropState] = useState<{ src: string; } | null>(null);
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
   const [weaponStats, setWeaponStats] = useState<WeaponStats | null>(null);
 
@@ -133,27 +138,34 @@ export default function WeaponAnalyzer() {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const dataUrl = reader.result as string;
-        setWeaponPreview(dataUrl);
         setAnalysisResult(null);
         setWeaponStats(null);
-        setIsProcessing(true);
-        try {
-          const { name, ...stats } = await extractStatsFromImage(dataUrl);
-          const extractedName = name || 'Unknown Weapon';
-          setWeaponStats({ name: extractedName, ...stats });
-        } catch (err) {
-          console.error(err);
-          toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter stats manually.', variant: 'destructive' });
-          setWeaponPreview(null);
-        } finally {
-          setIsProcessing(false);
-        }
+        setWeaponPreview(null);
+        setCropState({ src: dataUrl });
       };
       reader.readAsDataURL(file);
     }
     e.target.value = '';
   };
   
+  const handleCropComplete = async (croppedDataUrl: string) => {
+    setCropState(null);
+    setIsProcessing(true);
+    setWeaponPreview(croppedDataUrl);
+    
+    try {
+        const { name, ...stats } = await extractStatsFromImage(croppedDataUrl);
+        const extractedName = name || 'Unknown Weapon';
+        setWeaponStats({ name: extractedName, ...stats });
+    } catch (err) {
+        console.error(err);
+        toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter stats manually.', variant: 'destructive' });
+        setWeaponPreview(null);
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
   const performAnalysis = (stats: WeaponStats) => {
     if (!stats) return;
 
@@ -205,6 +217,14 @@ export default function WeaponAnalyzer() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
+        {cropState && (
+            <ImageCropperDialog
+              src={cropState.src}
+              onCropComplete={handleCropComplete}
+              onClose={() => setCropState(null)}
+              isProcessing={isProcessing}
+            />
+        )}
         <div className="grid w-full grid-cols-1 gap-8">
             <WeaponUploader
                 weaponNumber={1}

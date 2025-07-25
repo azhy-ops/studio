@@ -67,7 +67,7 @@ const WeaponUploader = ({
 
   return (
     <div className="space-y-3">
-       <Alert className="text-sm">
+       <Alert className="text-sm border-0">
           <AlertDescription>
             Tip: For better stat detection, please crop your image before uploading. Make sure only the weapon stats area is visible.
           </AlertDescription>
@@ -78,7 +78,7 @@ const WeaponUploader = ({
             htmlFor={inputId}
             className="relative flex flex-col items-center justify-center w-full aspect-[16/9] border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition-colors"
           >
-            {previewUrl ? (
+            {previewUrl && !isLoading ? (
               <Image
                 src={previewUrl}
                 alt={`Weapon ${weaponNumber} preview`}
@@ -87,11 +87,17 @@ const WeaponUploader = ({
               />
             ) : (
               <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
-                <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                <p className="mb-2 text-sm text-muted-foreground font-semibold">
-                  {isSingleUploader ? 'Upload Weapon Screenshot' : `Upload Weapon ${weaponNumber} Screenshot`}
-                </p>
-                <p className="text-xs text-muted-foreground">Click or drag & drop</p>
+                 {isLoading ? (
+                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                 ): (
+                    <>
+                        <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                        <p className="mb-2 text-sm text-muted-foreground font-semibold">
+                        {isSingleUploader ? 'Upload Weapon Screenshot' : `Upload Weapon ${weaponNumber} Screenshot`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Click or drag & drop</p>
+                    </>
+                 )}
               </div>
             )}
             <input
@@ -102,11 +108,6 @@ const WeaponUploader = ({
               accept="image/png, image/jpeg, image/webp"
               disabled={isLoading}
             />
-             {isLoading && (
-              <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            )}
           </label>
           
           {children}
@@ -125,18 +126,22 @@ const WeaponUploader = ({
           
           {stats && !isLoading && (
              <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
-                  {statDisplayOrder.map(statKey => (
+                  {statDisplayOrder.map(statKey => {
+                    const value = stats[statKey]
+                    if (value === undefined) return null;
+                    return (
                        <StatInput
                           key={statKey}
                           label={statKey}
-                          value={stats[statKey]}
+                          value={value}
                           onChange={(e) => onStatChange(statKey, e.target.value)}
                       />
-                  ))}
+                    )
+                  })}
              </div>
           )}
 
-          {isLoading && (
+          {isLoading && !stats && (
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
                   {Array.from({ length: 9 }).map((_, i) => (
                       <div key={i} className="grid grid-cols-2 items-center gap-2">
