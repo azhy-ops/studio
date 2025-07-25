@@ -58,7 +58,7 @@ export default function WeaponComparator() {
   const [weapon2Stats, setWeapon2Stats] = useState<WeaponStats | null>(null);
   
   const [stats, setStats] = useState<ComparatorStats | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean | number>(false);
+  const [isLoading, setIsLoading] = useState<false | 1 | 2>(false);
   const { toast } = useToast();
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
@@ -75,13 +75,18 @@ export default function WeaponComparator() {
 
   const handleCropComplete = async (croppedDataUrl: string, weaponNumber: 1 | 2) => {
     setIsLoading(weaponNumber);
+    setImageToCrop(null);
     
     if (weaponNumber === 1) {
-        URL.revokeObjectURL(weapon1Preview || '');
+        if (weapon1Preview && weapon1Preview.startsWith('blob:')) {
+          URL.revokeObjectURL(weapon1Preview);
+        }
         setWeapon1Preview(croppedDataUrl);
         setWeapon1Stats(null);
     } else {
-        URL.revokeObjectURL(weapon2Preview || '');
+        if (weapon2Preview && weapon2Preview.startsWith('blob:')) {
+          URL.revokeObjectURL(weapon2Preview);
+        }
         setWeapon2Preview(croppedDataUrl);
         setWeapon2Stats(null);
     }
@@ -100,10 +105,12 @@ export default function WeaponComparator() {
         else setWeapon2Preview(null);
     } finally {
         setIsLoading(false);
-        setImageToCrop(null);
     }
   };
-
+  
+  const handleCropperClose = () => {
+    setImageToCrop(null);
+  };
 
   const handleCompare = async () => {
     if (!weapon1Stats || !weapon2Stats) {
@@ -114,7 +121,7 @@ export default function WeaponComparator() {
       });
       return;
     }
-    if(!weapon1Stats.name || weapon1Stats.name === "Unknown Weapon" || !weapon2Stats.name || weapon2Stats.name === "Unknown Weapon") {
+    if(!weapon1Stats.name || weapon1Stats.name === "Unknown Weapon" || !weapon2Stats.name || !weapon2Stats.name || weapon2Stats.name === "Unknown Weapon") {
         toast({
             title: 'Missing Weapon Name',
             description: 'Please enter a name for both weapons.',
@@ -158,7 +165,7 @@ export default function WeaponComparator() {
         <ImageCropperDialog
             src={imageToCrop.src}
             onCropComplete={(url) => handleCropComplete(url, imageToCrop.weapon)}
-            onClose={() => setImageToCrop(null)}
+            onClose={handleCropperClose}
             isProcessing={isLoading === imageToCrop.weapon}
         />
       )}

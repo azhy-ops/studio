@@ -29,25 +29,29 @@ interface ImageCropperDialogProps {
 export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing = false }: ImageCropperDialogProps) {
   const imageRef = useRef<HTMLImageElement>(null);
   const cropperRef = useRef<any>(null);
+  const [isCropperReady, setIsCropperReady] = useState(false);
 
   useEffect(() => {
-    if (imageRef.current) {
-        const cropperInstance = new window.Cropper(imageRef.current, {
-            aspectRatio: 16 / 9,
-            viewMode: 2,
-            autoCropArea: 0.9,
-            dragMode: 'move',
-            guides: true,
-            background: false,
-        });
-        cropperRef.current = cropperInstance;
+    if (imageRef.current && src) {
+      const cropperInstance = new window.Cropper(imageRef.current, {
+        aspectRatio: 0,
+        viewMode: 1,
+        autoCropArea: 0.9,
+        dragMode: 'move',
+        guides: true,
+        background: false,
+        ready: () => {
+            setIsCropperReady(true);
+        }
+      });
+      cropperRef.current = cropperInstance;
     }
 
     return () => {
-        if (cropperRef.current) {
-            cropperRef.current.destroy();
-            cropperRef.current = null;
-        }
+      if (cropperRef.current) {
+        cropperRef.current.destroy();
+        cropperRef.current = null;
+      }
     };
   }, [src]);
 
@@ -61,7 +65,7 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
   };
 
   return (
-    <Dialog open={true} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <Dialog open={!!src} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Crop Image</DialogTitle>
@@ -74,7 +78,7 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isProcessing}>Cancel</Button>
-          <Button onClick={handleCrop} disabled={isProcessing}>
+          <Button onClick={handleCrop} disabled={!isCropperReady || isProcessing}>
             {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isProcessing ? 'Analyzing...' : 'Crop & Analyze'}
           </Button>

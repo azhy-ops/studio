@@ -200,9 +200,13 @@ export default function WeaponAnalyzer() {
       setIsProcessingCrop(true);
       setAnalysisResult(null);
       setWeaponStats(null);
-
-      URL.revokeObjectURL(weaponPreview || '');
+      
+      // We don't want to revoke the object URL if it's the same as the new one.
+      if (weaponPreview && weaponPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(weaponPreview);
+      }
       setWeaponPreview(croppedDataUrl);
+      setImageToCrop(null);
 
       try {
           const extractedStats = await extractStatsFromImage(croppedDataUrl);
@@ -213,7 +217,6 @@ export default function WeaponAnalyzer() {
           setWeaponPreview(null);
       } finally {
           setIsProcessingCrop(false);
-          setImageToCrop(null);
       }
   }
 
@@ -272,6 +275,10 @@ export default function WeaponAnalyzer() {
       setIsLoading(false);
     }
   };
+  
+  const handleCropperClose = () => {
+    setImageToCrop(null);
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
@@ -279,7 +286,7 @@ export default function WeaponAnalyzer() {
             <ImageCropperDialog
                 src={imageToCrop}
                 onCropComplete={handleCropComplete}
-                onClose={() => setImageToCrop(null)}
+                onClose={handleCropperClose}
                 isProcessing={isProcessingCrop}
             />
         )}
