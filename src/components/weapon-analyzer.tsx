@@ -47,11 +47,19 @@ const calculateScore = (stats: WeaponStats, weaponType: WeaponType): number => {
     muzzleVelocity: normalizeStat(stats.muzzleVelocity, 1200),
   };
 
-  for (const key in formula) {
-    const statKey = key as keyof typeof formula;
-    const weight = formula[statKey] || 0;
-    const statValue = normalizedStats[statKey] || 0;
-    rawScore += statValue * weight;
+  const applicableStats = Object.keys(formula).filter(key => stats[key as keyof WeaponStats] > 0) as (keyof typeof formula)[];
+  
+  if (applicableStats.length === 0) return 0;
+
+  const totalWeight = applicableStats.reduce((sum, key) => sum + (formula[key] || 0), 0);
+  
+  if (totalWeight === 0) return 0;
+
+  for (const key of applicableStats) {
+    const originalWeight = formula[key] || 0;
+    const rebalancedWeight = originalWeight / totalWeight;
+    const statValue = normalizedStats[key] || 0;
+    rawScore += statValue * rebalancedWeight;
   }
   
   const finalScore = rawScore / 10;
@@ -107,6 +115,9 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
     'muzzleVelocity',
   ];
 
+  const applicableStats = statDisplayOrder.filter(statKey => stats[statKey] !== undefined && stats[statKey] > 0);
+  const notApplicableStats = statDisplayOrder.filter(statKey => stats[statKey] === 0 || stats[statKey] === undefined);
+
   return (
     <Card className="w-full bg-card/50 backdrop-blur-sm animate-in fade-in-0 duration-500">
       <CardHeader>
@@ -137,9 +148,13 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
             <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
                 Base Stats
             </h3>
+             {notApplicableStats.length > 0 && (
+                <p className="text-xs text-muted-foreground mb-3">
+                    Note: The following stats were not detected and have been excluded from scoring: {notApplicableStats.map(s => s.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())).join(', ')}.
+                </p>
+            )}
             <div className='space-y-3'>
-                {statDisplayOrder.map((statKey, index) => {
-                    if (stats[statKey] === undefined) return null;
+                {applicableStats.map((statKey, index) => {
                     return (
                         <div key={statKey} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 50}ms`}}>
                             <SimpleStatBar
