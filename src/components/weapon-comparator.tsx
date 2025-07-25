@@ -11,7 +11,6 @@ import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
-import { ImageCropperDialog } from './image-cropper-dialog';
 
 interface ComparatorStats {
     weapon1Stats: WeaponStats;
@@ -19,8 +18,6 @@ interface ComparatorStats {
 }
 
 export default function WeaponComparator() {
-  const [cropState, setCropState] = useState<{ src: string; weaponNumber: 1 | 2 } | null>(null);
-  
   const [weapon1Preview, setWeapon1Preview] = useState<string | null>(null);
   const [weapon2Preview, setWeapon2Preview] = useState<string | null>(null);
   
@@ -35,56 +32,41 @@ export default function WeaponComparator() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const dataUrl = reader.result as string;
         setStats(null);
+        setIsProcessing(weaponNumber);
+        
         if (weaponNumber === 1) {
           setWeapon1Stats(null);
-          setWeapon1Preview(null);
+          setWeapon1Preview(dataUrl);
         } else {
           setWeapon2Stats(null);
-          setWeapon2Preview(null);
+          setWeapon2Preview(dataUrl);
         }
-        setCropState({ src: dataUrl, weaponNumber });
+
+        try {
+            const { name, ...extractedStats } = await extractStatsFromImage(dataUrl);
+            const extractedName = name || 'Unknown Weapon';
+            
+            if (weaponNumber === 1) {
+                setWeapon1Stats({ name: extractedName, ...extractedStats });
+            } else {
+                setWeapon2Stats({ name: extractedName, ...extractedStats });
+            }
+        } catch (err) {
+            console.error(err);
+            toast({ title: 'OCR Failed', description: `Could not read stats from the image for Weapon ${weaponNumber}. Please enter the stats manually.`, variant: 'destructive' });
+            if(weaponNumber === 1) setWeapon1Preview(null);
+            else setWeapon2Preview(null);
+        } finally {
+            setIsProcessing(false);
+        }
       };
       reader.readAsDataURL(file);
     }
     e.target.value = '';
   };
-
-  const handleCropComplete = async (croppedDataUrl: string) => {
-    if (!cropState) return;
-    
-    const { weaponNumber } = cropState;
-    
-    setIsProcessing(weaponNumber);
-    setCropState(null);
-
-    if (weaponNumber === 1) {
-      setWeapon1Preview(croppedDataUrl);
-    } else {
-      setWeapon2Preview(croppedDataUrl);
-    }
-
-    try {
-      const { name, ...extractedStats } = await extractStatsFromImage(croppedDataUrl);
-      const extractedName = name || 'Unknown Weapon';
-      
-      if (weaponNumber === 1) {
-        setWeapon1Stats({ name: extractedName, ...extractedStats });
-      } else {
-        setWeapon2Stats({ name: extractedName, ...extractedStats });
-      }
-    } catch (err) {
-      console.error(err);
-      toast({ title: 'OCR Failed', description: `Could not read stats from the image for Weapon ${weaponNumber}. Please enter the stats manually.`, variant: 'destructive' });
-      if(weaponNumber === 1) setWeapon1Preview(null);
-      else setWeapon2Preview(null);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
 
   const handleCompare = async () => {
     if (!weapon1Stats || !weapon2Stats) {
@@ -132,14 +114,6 @@ export default function WeaponComparator() {
 
   return (
     <div className="w-full max-w-6xl space-y-8">
-      {cropState && (
-        <ImageCropperDialog
-          src={cropState.src}
-          onCropComplete={handleCropComplete}
-          onClose={() => setCropState(null)}
-          isProcessing={!!isProcessing}
-        />
-      )}
       <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
         <WeaponUploader
           weaponNumber={1}
