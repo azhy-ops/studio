@@ -30,16 +30,17 @@ export default function RootLayout({
           crossOrigin="anonymous"
           referrerPolicy="no-referrer"
         />
-      </head>
-      <body className={cn('font-body antialiased')}>
-        {children}
-        <Toaster />
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"
           integrity="sha512-JyCZjCOZqC4lMv7Jr3o+jc4KKT0LpGv+A3M/tT/V1jV70tJv04/aH2eP3dY5AnEPaN8BG+rQEZG+5J9yU/A1Ew=="
           crossOrigin="anonymous"
           referrerPolicy="no-referrer"
+          strategy="afterInteractive"
         ></Script>
+      </head>
+      <body className={cn('font-body antialiased')}>
+        {children}
+        <Toaster />
       </body>
     </html>
   );

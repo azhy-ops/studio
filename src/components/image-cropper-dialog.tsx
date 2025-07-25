@@ -32,61 +32,55 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
   const [isCropperReady, setIsCropperReady] = useState(false);
 
   useEffect(() => {
-    const scriptId = 'cropper-script';
-    let script = document.getElementById(scriptId) as HTMLScriptElement;
+    const img = imageRef.current;
+    if (!img || !src) return;
 
     const initializeCropper = () => {
-        if (typeof window !== 'undefined' && window.Cropper && imageRef.current && src) {
-            if (cropperRef.current) {
-                cropperRef.current.destroy();
-            }
-
-            const cropperInstance = new window.Cropper(imageRef.current, {
-                aspectRatio: 0,
-                viewMode: 1,
-                autoCropArea: 0.9,
-                dragMode: 'move',
-                guides: true,
-                background: false,
-                ready: () => {
-                    setIsCropperReady(true);
-                }
-            });
-            cropperRef.current = cropperInstance;
-        }
+      if (typeof window !== 'undefined' && window.Cropper && img && !cropperRef.current) {
+        const cropperInstance = new window.Cropper(img, {
+          aspectRatio: 0,
+          viewMode: 1,
+          autoCropArea: 0.8,
+          dragMode: 'move',
+          guides: true,
+          background: false,
+          responsive: true,
+          checkOrientation: false,
+          ready: () => {
+            setIsCropperReady(true);
+          },
+        });
+        cropperRef.current = cropperInstance;
+      }
     };
     
-    if (!script) {
-        script = document.createElement('script');
-        script.id = scriptId;
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js";
-        script.async = true;
-        script.onload = initializeCropper;
-        document.body.appendChild(script);
-    } else {
+    img.onload = initializeCropper;
+    if (img.complete) {
         initializeCropper();
     }
-
-
+    
     return () => {
       if (cropperRef.current) {
         cropperRef.current.destroy();
         cropperRef.current = null;
       }
+      if(img) {
+        img.onload = null;
+      }
+      setIsCropperReady(false);
     };
   }, [src]);
 
   const handleCrop = () => {
     if (cropperRef.current) {
       const croppedCanvas = cropperRef.current.getCroppedCanvas({
-          // Make sure cropped image is not too small, but not too large either
-          minWidth: 256,
-          minHeight: 256,
-          maxWidth: 4096,
-          maxHeight: 4096,
-          fillColor: '#fff',
-          imageSmoothingEnabled: true,
-          imageSmoothingQuality: 'high',
+        minWidth: 256,
+        minHeight: 256,
+        maxWidth: 4096,
+        maxHeight: 4096,
+        fillColor: '#fff',
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
       });
       if (croppedCanvas) {
         const dataUrl = croppedCanvas.toDataURL('image/png');
@@ -101,13 +95,15 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
         <DialogHeader>
           <DialogTitle>Crop Image</DialogTitle>
           <DialogDescription>
-            Adjust the selection to focus only on the weapon's stats area for best results.
+            Adjust the selection to focus only on the weapon's stats area for best results. Drag the box to select the stats bar.
           </DialogDescription>
         </DialogHeader>
-        <div className="max-h-[60vh] overflow-hidden bg-muted">
-          <img ref={imageRef} src={src} alt="Source for cropping" style={{ maxWidth: '100%', opacity: isCropperReady ? 1 : 0 }} />
-           {!isCropperReady && (
-              <div className="absolute inset-0 flex items-center justify-center">
+        <div className="relative max-h-[60vh] overflow-hidden bg-muted flex items-center justify-center">
+            <div className='w-full h-full'>
+              <img ref={imageRef} src={src} alt="Source for cropping" className="opacity-0 max-w-full max-h-full block" />
+            </div>
+           {(!isCropperReady || isProcessing) && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             )}
