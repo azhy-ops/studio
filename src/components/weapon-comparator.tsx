@@ -58,7 +58,7 @@ export default function WeaponComparator() {
   const [weapon2Stats, setWeapon2Stats] = useState<WeaponStats | null>(null);
   
   const [stats, setStats] = useState<ComparatorStats | null>(null);
-  const [isLoading, setIsLoading] = useState<false | 1 | 2>(false);
+  const [isProcessing, setIsProcessing] = useState<false | 1 | 2>(false);
   const { toast } = useToast();
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
@@ -74,8 +74,9 @@ export default function WeaponComparator() {
   };
 
   const handleCropComplete = async (croppedDataUrl: string, weaponNumber: 1 | 2) => {
-    setIsLoading(weaponNumber);
+    setIsProcessing(weaponNumber);
     setImageToCrop(null);
+    setStats(null);
     
     if (weaponNumber === 1) {
         if (weapon1Preview && weapon1Preview.startsWith('blob:')) {
@@ -104,7 +105,7 @@ export default function WeaponComparator() {
         if(weaponNumber === 1) setWeapon1Preview(null);
         else setWeapon2Preview(null);
     } finally {
-        setIsLoading(false);
+        setIsProcessing(false);
     }
   };
   
@@ -121,7 +122,7 @@ export default function WeaponComparator() {
       });
       return;
     }
-    if(!weapon1Stats.name || weapon1Stats.name === "Unknown Weapon" || !weapon2Stats.name || !weapon2Stats.name || weapon2Stats.name === "Unknown Weapon") {
+    if(!weapon1Stats.name || weapon1Stats.name === "Unknown Weapon" || !weapon2Stats.name || weapon2Stats.name === "Unknown Weapon") {
         toast({
             title: 'Missing Weapon Name',
             description: 'Please enter a name for both weapons.',
@@ -166,7 +167,7 @@ export default function WeaponComparator() {
             src={imageToCrop.src}
             onCropComplete={(url) => handleCropComplete(url, imageToCrop.weapon)}
             onClose={handleCropperClose}
-            isProcessing={isLoading === imageToCrop.weapon}
+            isProcessing={isProcessing === imageToCrop.weapon}
         />
       )}
       <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
@@ -178,7 +179,7 @@ export default function WeaponComparator() {
           onNameChange={(e) => handleNameChange(1, e.target.value)}
           stats={weapon1Stats}
           onStatChange={(stat, value) => handleStatChange(1, stat, value)}
-          isLoading={isLoading === 1}
+          isLoading={isProcessing === 1}
         />
         <WeaponUploader
           weaponNumber={2}
@@ -188,7 +189,7 @@ export default function WeaponComparator() {
           onNameChange={(e) => handleNameChange(2, e.target.value)}
           stats={weapon2Stats}
           onStatChange={(stat, value) => handleStatChange(2, stat, value)}
-          isLoading={isLoading === 2}
+          isLoading={isProcessing === 2}
         />
       </div>
 
@@ -196,7 +197,7 @@ export default function WeaponComparator() {
         <Button
           size="lg"
           onClick={handleCompare}
-          disabled={!weapon1Stats || !weapon2Stats || !!isLoading}
+          disabled={!weapon1Stats || !weapon2Stats || !!isProcessing}
           className="font-headline text-lg"
         >
           <Dices className="mr-2 h-5 w-5" />

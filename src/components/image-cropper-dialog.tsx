@@ -32,7 +32,13 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
   const [isCropperReady, setIsCropperReady] = useState(false);
 
   useEffect(() => {
-    if (imageRef.current && src) {
+    // Ensure the window and Cropper object are available.
+    if (typeof window !== 'undefined' && window.Cropper && imageRef.current && src) {
+      // Destroy previous instance if it exists
+      if (cropperRef.current) {
+        cropperRef.current.destroy();
+      }
+
       const cropperInstance = new window.Cropper(imageRef.current, {
         aspectRatio: 0,
         viewMode: 1,
@@ -50,7 +56,6 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
     return () => {
       if (cropperRef.current) {
         cropperRef.current.destroy();
-        cropperRef.current = null;
       }
     };
   }, [src]);

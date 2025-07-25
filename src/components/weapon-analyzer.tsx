@@ -201,7 +201,6 @@ export default function WeaponAnalyzer() {
       setAnalysisResult(null);
       setWeaponStats(null);
       
-      // We don't want to revoke the object URL if it's the same as the new one.
       if (weaponPreview && weaponPreview.startsWith('blob:')) {
         URL.revokeObjectURL(weaponPreview);
       }
