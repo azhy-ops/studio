@@ -218,12 +218,14 @@ export default function WeaponAnalyzer() {
       // Step 1: Use Tesseract for OCR extraction
       const ocrResult = await extractStatsFromImage(weaponDataUri);
       
-      if (ocrResult.name && ocrResult.name !== 'Unknown Weapon') {
-          setWeaponName(ocrResult.name);
+      const finalStats = { ...ocrResult, name: weaponName || ocrResult.name };
+
+      if (finalStats.name && finalStats.name !== 'Unknown Weapon') {
+          setWeaponName(finalStats.name);
       }
       
       // Step 2: Run the local rule-based analysis
-      const result = runRuleBasedAnalysis(ocrResult);
+      const result = runRuleBasedAnalysis(finalStats);
       setAnalysisResult(result);
 
     } catch (e) {

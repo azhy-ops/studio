@@ -102,11 +102,18 @@ export default function WeaponComparator() {
         extractStatsFromImage(weapon2DataUri),
       ]);
       
-      const result = { weapon1Stats, weapon2Stats };
+      const result = { 
+        weapon1Stats: { ...weapon1Stats, name: weapon1Name || weapon1Stats.name },
+        weapon2Stats: { ...weapon2Stats, name: weapon2Name || weapon2Stats.name },
+      };
 
       setStats(result);
-      setWeapon1Name(result.weapon1Stats.name);
-      setWeapon2Name(result.weapon2Stats.name);
+      if (result.weapon1Stats.name && result.weapon1Stats.name !== 'Unknown Weapon') {
+        setWeapon1Name(result.weapon1Stats.name);
+      }
+      if (result.weapon2Stats.name && result.weapon2Stats.name !== 'Unknown Weapon') {
+        setWeapon2Name(result.weapon2Stats.name);
+      }
     } catch (e) {
       console.error(e);
       toast({
