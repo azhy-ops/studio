@@ -2,7 +2,7 @@
 "use client";
 
 import Image from 'next/image';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
 import { UploadCloud, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ interface WeaponUploaderProps {
   stats: WeaponStats | null;
   onStatChange: (statName: keyof WeaponStats, value: string) => void;
   isLoading?: boolean;
+  children?: ReactNode;
 }
 
 const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'handling'>)[] = [
@@ -56,7 +57,8 @@ const WeaponUploader = ({
   isSingleUploader = false,
   stats,
   onStatChange,
-  isLoading = false
+  isLoading = false,
+  children
 }: WeaponUploaderProps) => {
   const inputId = `file-upload-${weaponNumber}`;
 
@@ -97,6 +99,9 @@ const WeaponUploader = ({
             </div>
           )}
         </label>
+        
+        {children}
+
         <div className="relative">
           <Input
             type="text"

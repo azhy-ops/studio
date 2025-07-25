@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,12 +10,20 @@ import { useToast } from '@/hooks/use-toast';
 import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Badge } from './ui/badge';
-import { List, ShieldCheck, ShieldPlus, ShieldAlert, Loader2 } from 'lucide-react';
+import { List, ShieldCheck, ShieldPlus, ShieldAlert, Loader2, HelpCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SimpleStatBar } from './stat-bar';
 
+type WeaponType = "Shotgun" | "Pistol" | "SMG" | "Assault Rifle" | "Marksman Rifle" | "Sniper Rifle";
+
+const weaponTypes: WeaponType[] = ["Shotgun", "Pistol", "SMG", "Assault Rifle", "Marksman Rifle", "Sniper Rifle"];
 
 interface AnalysisOutput {
     stats: WeaponStats;
-    recommendedRanges: string[];
+    score: number;
+    scoreBreakdown: Record<string, number>;
+    weaponType: WeaponType;
     summaryPoints: { point: string; type: 'strength' | 'secondary-strength' | 'weakness'}[];
 }
 
@@ -31,13 +39,45 @@ const statDescriptions: Record<string, string> = {
     muzzleVelocity: 'bullet travel speed',
 };
 
+const formulas: Record<WeaponType, Partial<Record<keyof Omit<WeaponStats, 'name' | 'ttk'>, number>>> = {
+    "Shotgun": { damage: 0.30, handling: 0.25, mobility: 0.15, control: 0.10, stability: 0.10, accuracy: 0.05, range: 0.03, fireRate: 0.02 },
+    "Pistol": { handling: 0.30, mobility: 0.25, accuracy: 0.15, control: 0.10, damage: 0.10, stability: 0.05, range: 0.03, fireRate: 0.02 },
+    "SMG": { fireRate: 0.30, mobility: 0.25, control: 0.15, stability: 0.10, handling: 0.10, accuracy: 0.05, damage: 0.03, range: 0.02 },
+    "Assault Rifle": { accuracy: 0.20, damage: 0.18, control: 0.15, stability: 0.15, handling: 0.10, range: 0.10, fireRate: 0.07, mobility: 0.03, muzzleVelocity: 0.02 },
+    "Marksman Rifle": { accuracy: 0.25, range: 0.20, damage: 0.18, stability: 0.15, control: 0.10, handling: 0.05, muzzleVelocity: 0.05, mobility: 0.02 },
+    "Sniper Rifle": { accuracy: 0.30, range: 0.25, muzzleVelocity: 0.20, stability: 0.10, damage: 0.08, control: 0.05, handling: 0.02 }
+};
+
+
+const normalizeStat = (value: number, max: number) => (value / max) * 100;
+
+const calculateScore = (stats: WeaponStats, weaponType: WeaponType): { score: number, breakdown: Record<string, number> } => {
+  const formula = formulas[weaponType];
+  let score = 0;
+  const breakdown: Record<string, number> = {};
+  
+  const normalizedStats = {
+    ...stats,
+    fireRate: normalizeStat(stats.fireRate, 1200),
+    muzzleVelocity: normalizeStat(stats.muzzleVelocity, 1200),
+  };
+
+  for (const key in formula) {
+    const statKey = key as keyof typeof formula;
+    const weight = formula[statKey] || 0;
+    const statValue = normalizedStats[statKey] || 0;
+    const contribution = statValue * weight;
+    score += contribution;
+    breakdown[statKey] = parseFloat(contribution.toFixed(2));
+  }
+  return { score: parseFloat(score.toFixed(2)), breakdown };
+};
+
 const getSummaryPoints = (stats: WeaponStats): { point: string; type: 'strength' | 'secondary-strength' | 'weakness' }[] => {
     const points: { point: string; type: 'strength' | 'secondary-strength' | 'weakness' }[] = [];
     const statKeys = Object.keys(statDescriptions) as (keyof typeof statDescriptions)[];
 
-    const normalizedStats = { ...stats };
-    normalizedStats.fireRate = Math.min(stats.fireRate / 12, 100);
-    normalizedStats.muzzleVelocity = Math.min(stats.muzzleVelocity / 12, 100);
+    const normalizedStats = { ...stats, fireRate: normalizeStat(stats.fireRate, 1200), muzzleVelocity: normalizeStat(stats.muzzleVelocity, 1200) };
 
     for (const key of statKeys) {
         if (!Object.prototype.hasOwnProperty.call(stats, key)) continue;
@@ -58,54 +98,12 @@ const getSummaryPoints = (stats: WeaponStats): { point: string; type: 'strength'
     }).slice(0, 5);
 };
 
-const calculateScores = (stats: WeaponStats) => {
-    const s = { ...stats }; 
-    s.fireRate = Math.min(s.fireRate / 12, 100); 
-    s.muzzleVelocity = Math.min(s.muzzleVelocity / 12, 100);
-
-    const shortRangeScore = 
-        s.damage * 0.20 + s.fireRate * 0.20 + s.handling * 0.15 + s.control * 0.15 + 
-        s.mobility * 0.10 + s.stability * 0.10 + s.accuracy * 0.05 + s.range * 0.03 + 
-        s.muzzleVelocity * 0.02;
-
-    const midRangeScore = 
-        s.accuracy * 0.20 + s.damage * 0.18 + s.control * 0.15 + s.stability * 0.15 + 
-        s.range * 0.12 + s.handling * 0.10 + s.fireRate * 0.05 + s.mobility * 0.03 + 
-        s.muzzleVelocity * 0.02;
-
-    const longRangeScore = 
-        s.accuracy * 0.25 + s.stability * 0.20 + s.control * 0.15 + s.damage * 0.15 + 
-        s.range * 0.10 + s.muzzleVelocity * 0.08 + s.handling * 0.03 + s.mobility * 0.02;
-
-    return { shortRangeScore, midRangeScore, longRangeScore };
-};
-
-const getRecommendedRanges = (scores: { shortRangeScore: number; midRangeScore: number; longRangeScore: number }): string[] => {
-    const ranges: string[] = [];
-    if (scores.shortRangeScore >= 65) ranges.push("Close Range");
-    if (scores.midRangeScore >= 65) ranges.push("Mid Range");
-    if (scores.longRangeScore >= 65) ranges.push("Long Range");
-
-    if (ranges.length > 0) return ranges;
-
-    const allScores = { "Close Range": scores.shortRangeScore, "Mid Range": scores.midRangeScore, "Long Range": scores.longRangeScore };
-    const highestScore = Math.max(...Object.values(allScores));
-    const bestRange = Object.keys(allScores).find(range => allScores[range as keyof typeof allScores] === highestScore);
-    
-    return [`Suited for ${bestRange}`];
-};
-
-
 function AnalysisSkeleton() {
     return (
       <Card className="w-full">
         <CardHeader>
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
-          <div className="flex gap-2 pt-2">
-            <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-6 w-24" />
-          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <Skeleton className="h-6 w-1/3" />
@@ -130,34 +128,69 @@ const pointTypeIcons: Record<string, React.ReactNode> = {
 
 function AnalysisResult({ data }: { data: AnalysisOutput }) {
   
+  const sortedBreakdown = useMemo(() => {
+    return Object.entries(data.scoreBreakdown).sort(([, a], [, b]) => b - a);
+  }, [data.scoreBreakdown]);
+
   return (
     <Card className="w-full bg-card/50 backdrop-blur-sm animate-in fade-in-0 duration-500">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl sm:text-4xl">{data.stats.name}</CardTitle>
-        <CardDescription>
-          A tactical breakdown of this weapon's performance characteristics.
-        </CardDescription>
-        <div className="flex flex-wrap items-center gap-2 pt-2">
-            <span className='text-sm font-medium text-muted-foreground'>Best for:</span>
-            {data.recommendedRanges.map(range => (
-                <Badge key={range} variant="outline" className="text-base">{range}</Badge>
-            ))}
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle className="font-headline text-3xl sm:text-4xl">{data.stats.name}</CardTitle>
+                <CardDescription>
+                    Best for <span className="font-semibold text-accent">{data.weaponType}</span> role.
+                </CardDescription>
+            </div>
+            <div className='text-right'>
+                <p className='text-sm text-muted-foreground'>Role Score</p>
+                <p className='font-headline text-5xl text-primary'>{data.score}</p>
+            </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div>
-          <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
-            <List className="h-5 w-5" />
-            Key Points
-          </h3>
-          <ul className="space-y-2.5">
-              {data.summaryPoints.map((summary, index) => (
-                  <li key={index} className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
-                      <span className="shrink-0">{pointTypeIcons[summary.type]}</span>
-                      <span>{summary.point}</span>
-                  </li>
-              ))}
-          </ul>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+            <div>
+                <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
+                    <List className="h-5 w-5" />
+                    Key Characteristics
+                </h3>
+                <ul className="space-y-2.5">
+                    {data.summaryPoints.map((summary, index) => (
+                        <li key={index} className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
+                            <span className="shrink-0">{pointTypeIcons[summary.type]}</span>
+                            <span>{summary.point}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            <div>
+                 <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
+                    Score Contribution
+                    <TooltipProvider>
+                        <Tooltip delayDuration={0}>
+                        <TooltipTrigger>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground/70 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>How much each stat contributes to the final role score.</p>
+                        </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                 </h3>
+                 <div className='space-y-2'>
+                    {sortedBreakdown.map(([stat, value], index) => (
+                        <div key={stat} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 50}ms`}}>
+                            <SimpleStatBar 
+                                statName={stat}
+                                value={value}
+                                label={stat}
+                                isSuperior={index < 3}
+                            />
+                        </div>
+                    ))}
+                 </div>
+            </div>
         </div>
       </CardContent>
     </Card>
@@ -167,6 +200,7 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
 export default function WeaponAnalyzer() {
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
   const [weaponStats, setWeaponStats] = useState<WeaponStats | null>(null);
+  const [weaponType, setWeaponType] = useState<WeaponType | null>(null);
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -200,7 +234,52 @@ export default function WeaponAnalyzer() {
     }
     e.target.value = '';
   };
+  
+  const performAnalysis = (type: WeaponType, stats: WeaponStats) => {
+    if (!type || !stats) return;
 
+    setIsLoading(true);
+    setAnalysisResult(null);
+
+    startTransition(() => {
+        const { score, breakdown } = calculateScore(stats, type);
+        const summaryPoints = getSummaryPoints(stats);
+        
+        setAnalysisResult({
+            stats: stats,
+            score: score,
+            scoreBreakdown: breakdown,
+            weaponType: type,
+            summaryPoints,
+        });
+
+        setIsLoading(false);
+    });
+  }
+
+  const handleAnalyze = async () => {
+    if (!weaponStats) {
+      toast({ title: 'Missing Stats', description: 'Please upload a screenshot or enter stats manually.', variant: 'destructive' });
+      return;
+    }
+    if(!weaponStats.name || weaponStats.name === "Unknown Weapon") {
+        toast({ title: 'Missing Weapon Name', description: 'Please enter a name for the weapon.', variant: 'destructive' });
+        return;
+    }
+    if (!weaponType) {
+      toast({ title: 'Missing Weapon Type', description: 'Please select a weapon type before analyzing.', variant: 'destructive' });
+      return;
+    }
+    performAnalysis(weaponType, weaponStats);
+  };
+  
+  const handleWeaponTypeChange = (type: WeaponType) => {
+    setWeaponType(type);
+    if (analysisResult && weaponStats) {
+      performAnalysis(type, weaponStats);
+    }
+  }
+  
   const handleStatChange = (statName: keyof WeaponStats, value: string) => {
     if (!weaponStats) return;
     const numericValue = parseInt(value, 10);
@@ -211,6 +290,10 @@ export default function WeaponAnalyzer() {
       updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
     }
     setWeaponStats(updatedStats);
+
+    if (analysisResult && weaponType) {
+        performAnalysis(weaponType, updatedStats);
+    }
   };
   
   const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -219,45 +302,9 @@ export default function WeaponAnalyzer() {
     }
   }
 
-  const handleAnalyze = async () => {
-    if (!weaponStats) {
-      toast({
-        title: 'Missing Stats',
-        description: 'Please upload a screenshot or enter stats manually.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if(!weaponStats.name || weaponStats.name === "Unknown Weapon") {
-        toast({
-            title: 'Missing Weapon Name',
-            description: 'Please enter a name for the weapon.',
-            variant: 'destructive',
-        });
-        return;
-    }
-
-    setIsLoading(true);
-    setAnalysisResult(null);
-
-    startTransition(() => {
-        const scores = calculateScores(weaponStats);
-        const recommendedRanges = getRecommendedRanges(scores);
-        const summaryPoints = getSummaryPoints(weaponStats);
-        
-        setAnalysisResult({
-            stats: weaponStats,
-            recommendedRanges,
-            summaryPoints,
-        });
-
-        setIsLoading(false);
-    });
-  };
-  
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
-        <div className="grid w-full grid-cols-1">
+        <div className="grid w-full grid-cols-1 gap-8">
             <WeaponUploader
                 weaponNumber={1}
                 previewUrl={weaponPreview}
@@ -268,14 +315,27 @@ export default function WeaponAnalyzer() {
                 stats={weaponStats}
                 onStatChange={handleStatChange}
                 isLoading={isProcessing}
-            />
+            >
+                <div className="w-full">
+                    <Select onValueChange={(value: WeaponType) => handleWeaponTypeChange(value)} disabled={!weaponStats}>
+                        <SelectTrigger className="font-headline">
+                            <SelectValue placeholder="Select Weapon Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {weaponTypes.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </WeaponUploader>
         </div>
 
         <div className="flex w-full justify-center">
             <Button
                 size="lg"
                 onClick={handleAnalyze}
-                disabled={!weaponStats || isLoading || isPending || isProcessing}
+                disabled={!weaponStats || !weaponType || isLoading || isPending || isProcessing}
                 className="font-headline text-lg"
             >
                 {(isLoading || isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

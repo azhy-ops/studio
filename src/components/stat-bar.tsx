@@ -16,6 +16,15 @@ const statDescriptions: { [key: string]: string } = {
   'Accuracy': 'How closely shots follow the crosshair during firing.',
   'Fire Rate': 'How many bullets the gun fires per minute (RPM).',
   'Muzzle Velocity': 'How fast bullets travel after being fired.',
+  'damage': 'How much health each shot removes from the enemy.',
+  'range': 'How far the weapon remains effective before damage drop-off.',
+  'control': 'How easy it is to manage the weapon’s recoil.',
+  'handling': 'How fast you can aim down sights and switch weapons.',
+  'mobility': 'How fast you can move while holding the weapon. Affects handling.',
+  'stability': 'How steady the aim stays while shooting continuously.',
+  'accuracy': 'How closely shots follow the crosshair during firing.',
+  'fireRate': 'How many bullets the gun fires per minute (RPM).',
+  'muzzleVelocity': 'How fast bullets travel after being fired.',
 };
 
 interface StatBarProps {
@@ -26,7 +35,8 @@ interface StatBarProps {
 }
 
 const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarProps) => {
-  const maxStatValue = statName.toLowerCase() === 'firerate' || statName.toLowerCase() === 'muzzlevelocity' ? 1200 : 100;
+  const isScoreContribution = !statDescriptions[label];
+  const maxStatValue = isScoreContribution ? 40 : (statName.toLowerCase() === 'firerate' || statName.toLowerCase() === 'muzzlevelocity' ? 1200 : 100);
   const barWidth = Math.min((value / maxStatValue) * 100, 100);
   const normalizedStatName = statName.toLowerCase().replace(/\s/g, '');
 
@@ -34,7 +44,7 @@ const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarPr
     <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-4">
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground w-32">
         <StatIcon name={normalizedStatName} className="h-5 w-5" />
-        <span>{label}</span>
+        <span className='capitalize'>{label.replace(/([A-Z])/g, ' $1')}</span>
         {statDescriptions[label] && (
             <TooltipProvider>
                 <Tooltip delayDuration={0}>
