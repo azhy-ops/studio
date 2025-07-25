@@ -30,33 +30,67 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
   const imageRef = useRef<HTMLImageElement>(null);
   const cropperRef = useRef<any>(null);
   const [isCropperReady, setIsCropperReady] = useState(false);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
   useEffect(() => {
+    const script = document.querySelector('script[src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"]');
+    if (!script) return;
+
+    const handleLoad = () => {
+      setIsScriptLoaded(true);
+    };
+
+    if ((script as any).readyState) { 
+      (script as any).onreadystatechange = () => {
+        if ((script as any).readyState === "loaded" || (script as any).readyState === "complete") {
+          (script as any).onreadystatechange = null;
+          handleLoad();
+        }
+      };
+    } else {
+      script.addEventListener('load', handleLoad);
+    }
+    
+    // If script is already loaded
+    if (window.Cropper) {
+        handleLoad();
+    }
+
+    return () => {
+      script.removeEventListener('load', handleLoad);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isScriptLoaded) return;
+
     const img = imageRef.current;
     if (!img || !src) return;
 
     const initializeCropper = () => {
-      if (typeof window !== 'undefined' && window.Cropper && img && !cropperRef.current) {
-        const cropperInstance = new window.Cropper(img, {
-          aspectRatio: 0,
-          viewMode: 1,
-          autoCropArea: 0.8,
-          dragMode: 'move',
-          guides: true,
-          background: false,
-          responsive: true,
-          checkOrientation: false,
-          ready: () => {
-            setIsCropperReady(true);
-          },
-        });
-        cropperRef.current = cropperInstance;
+      if (cropperRef.current) {
+        cropperRef.current.destroy();
       }
+      const cropperInstance = new window.Cropper(img, {
+        aspectRatio: 0,
+        viewMode: 1,
+        autoCropArea: 0.8,
+        dragMode: 'move',
+        guides: true,
+        background: false,
+        responsive: true,
+        checkOrientation: false,
+        ready: () => {
+          setIsCropperReady(true);
+        },
+      });
+      cropperRef.current = cropperInstance;
     };
     
-    img.onload = initializeCropper;
     if (img.complete) {
         initializeCropper();
+    } else {
+        img.onload = initializeCropper;
     }
     
     return () => {
@@ -69,7 +103,7 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
       }
       setIsCropperReady(false);
     };
-  }, [src]);
+  }, [src, isScriptLoaded]);
 
   const handleCrop = () => {
     if (cropperRef.current) {
