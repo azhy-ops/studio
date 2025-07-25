@@ -68,9 +68,6 @@ const WeaponUploader = ({
   return (
     <div className="space-y-3">
        <Alert className="text-sm">
-          <AlertTitle className="font-headline flex items-center gap-2">
-            📸 Pro Tip!
-          </AlertTitle>
           <AlertDescription>
             For the best results, please crop your screenshot before uploading. Make sure only the weapon's stats area is clearly visible.
           </AlertDescription>
