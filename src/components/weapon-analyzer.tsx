@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
-import type { ChangeEvent } from 'react';
+import { useState, useTransition, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +10,7 @@ import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
 import WeaponUploader from '@/components/weapon-uploader';
 import { Loader2 } from 'lucide-react';
 import { SimpleStatBar } from './stat-bar';
+import { ImageCropperDialog } from './image-cropper-dialog';
 
 interface AnalysisOutput {
     stats: WeaponStats;
@@ -120,6 +120,7 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
 }
 
 export default function WeaponAnalyzer() {
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
   const [weaponStats, setWeaponStats] = useState<WeaponStats | null>(null);
 
@@ -133,27 +134,32 @@ export default function WeaponAnalyzer() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const dataUrl = reader.result as string;
-        setAnalysisResult(null);
-        setWeaponStats(null);
-        setWeaponPreview(dataUrl);
-        setIsProcessing(true);
-        try {
-            const { name, ...stats } = await extractStatsFromImage(dataUrl);
-            const extractedName = name || 'Unknown Weapon';
-            setWeaponStats({ name: extractedName, ...stats });
-        } catch (err) {
-            console.error(err);
-            toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter stats manually.', variant: 'destructive' });
-            setWeaponPreview(null);
-        } finally {
-            setIsProcessing(false);
-        }
+      reader.onloadend = () => {
+        setImageToCrop(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
     e.target.value = '';
+  };
+
+  const handleCropComplete = async (croppedDataUrl: string) => {
+    setAnalysisResult(null);
+    setWeaponStats(null);
+    setWeaponPreview(croppedDataUrl);
+    setImageToCrop(null);
+    setIsProcessing(true);
+
+    try {
+        const { name, ...stats } = await extractStatsFromImage(croppedDataUrl);
+        const extractedName = name || 'Unknown Weapon';
+        setWeaponStats({ name: extractedName, ...stats });
+    } catch (err) {
+        console.error(err);
+        toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter stats manually.', variant: 'destructive' });
+        setWeaponPreview(null);
+    } finally {
+        setIsProcessing(false);
+    }
   };
   
   const performAnalysis = (stats: WeaponStats) => {
@@ -207,6 +213,13 @@ export default function WeaponAnalyzer() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
+        <ImageCropperDialog
+            src={imageToCrop}
+            onClose={() => setImageToCrop(null)}
+            onCropComplete={handleCropComplete}
+            isProcessing={isProcessing}
+        />
+
         <div className="grid w-full grid-cols-1 gap-8">
             <WeaponUploader
                 weaponNumber={1}
