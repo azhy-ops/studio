@@ -54,6 +54,12 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
     },
 };
 
+const rangeDistances: Record<CombatRange, string> = {
+    "Close Range": "0-20m",
+    "Mid Range": "21-50m",
+    "Long Range": "51m+",
+};
+
 const calculateScore = (stats: WeaponStats, range: CombatRange): number => {
   const formula = formulas[range];
   let score = 0;
@@ -98,7 +104,7 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl sm:text-4xl">Combat Range Analysis</CardTitle>
           <CardDescription>Select a combat range to see the recommended weapon.</CardDescription>
-          <div className="pt-2 flex justify-center">
+          <div className="pt-2 flex justify-center flex-col items-center">
             <Select onValueChange={(value: CombatRange) => setSelectedRange(value)} defaultValue={selectedRange}>
               <SelectTrigger className="w-[200px] font-headline">
                 <SelectValue placeholder="Select Range" />
@@ -109,6 +115,7 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
                 <SelectItem value="Long Range">Long Range</SelectItem>
               </SelectContent>
             </Select>
+             <p className="text-xs text-muted-foreground mt-2">{rangeDistances[selectedRange]}</p>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
