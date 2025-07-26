@@ -3,7 +3,8 @@
 
 import Image from 'next/image';
 import type { ChangeEvent, ReactNode, FocusEvent } from 'react';
-import { UploadCloud, Pencil } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { UploadCloud, Pencil, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from './ui/skeleton';
@@ -11,6 +12,15 @@ import { Label } from './ui/label';
 import type { WeaponStats } from '@/lib/ocr';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface WeaponUploaderProps {
   weaponNumber: 1 | 2;
@@ -64,27 +74,49 @@ const WeaponUploader = ({
   children
 }: WeaponUploaderProps) => {
   const inputId = `file-upload-${weaponNumber}`;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
     event.target.select();
   };
 
+  const handleImageContainerClick = () => {
+    if (previewUrl && !isLoading) {
+      setIsPreviewOpen(true);
+    } else if (!isLoading) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleReplaceImageClick = () => {
+    setIsPreviewOpen(false);
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="space-y-3">
-      {weaponNumber === 1 && (
+       {weaponNumber === 1 && !isSingleUploader && (
         <Alert className="text-sm">
           <AlertDescription>
            ⚠️ Tip: For best results, crop the image to only show the weapon's stats. Double-check the extracted values and correct any inaccurate numbers manually before analysis.
           </AlertDescription>
         </Alert>
       )}
-       {weaponNumber === 2 && (
+       {weaponNumber === 2 && !isSingleUploader && (
         <div className="h-[54px] hidden md:block"></div>
       )}
+       {isSingleUploader && (
+        <Alert className="text-sm">
+          <AlertDescription>
+           ⚠️ Tip: For best results, crop the image to only show the weapon's stats. Double-check the extracted values and correct any inaccurate numbers manually before analysis.
+          </AlertDescription>
+        </Alert>
+       )}
       <Card className="flex flex-col items-center justify-center transition-all hover:border-accent">
         <CardContent className="p-4 w-full space-y-2">
-          <label
-            htmlFor={inputId}
+          <div
+            onClick={handleImageContainerClick}
             className="relative flex flex-col items-center justify-center w-full aspect-[16/9] border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition-colors"
           >
             {previewUrl && !isLoading ? (
@@ -110,6 +142,7 @@ const WeaponUploader = ({
               </div>
             )}
             <input
+              ref={fileInputRef}
               id={inputId}
               type="file"
               className="hidden"
@@ -117,7 +150,7 @@ const WeaponUploader = ({
               accept="image/png, image/jpeg, image/webp"
               disabled={isLoading}
             />
-          </label>
+          </div>
           
           {children}
 
@@ -164,6 +197,23 @@ const WeaponUploader = ({
 
         </CardContent>
       </Card>
+      
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{weaponName || `Weapon ${weaponNumber}`}</DialogTitle>
+          </DialogHeader>
+          <div className="relative aspect-video">
+            {previewUrl && (
+              <Image src={previewUrl} alt={`Preview of ${weaponName}`} layout="fill" objectFit="contain" />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>Close</Button>
+            <Button onClick={handleReplaceImageClick}>Replace Image</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
