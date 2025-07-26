@@ -11,6 +11,7 @@ import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
 import { ImageCropperDialog } from './image-cropper-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ComparatorStats {
     weapon1Stats: WeaponStats;
@@ -129,6 +130,19 @@ export default function WeaponComparator() {
             onCropComplete={handleCropComplete}
             isProcessing={!!isProcessing}
         />
+       <Alert className="text-sm">
+        <AlertDescription className="space-y-2">
+            <p>
+                ⚠️ **Tip:** Use the crop box below to highlight only the weapon’s stats — This helps the system read the numbers more accurately.
+            </p>
+            <p>
+                Some games might use different stat names (like "Handling" vs "Mobility"), or leave some out completely. Don’t worry — missing stats won’t affect the calculation.
+            </p>
+            <p>
+                🔍 After cropping, please double-check the extracted numbers and fix any incorrect values before analysis.
+            </p>
+        </AlertDescription>
+       </Alert>
       <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
         <WeaponUploader
           weaponNumber={1}
