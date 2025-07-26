@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useMemo } from 'react';
 import { Dices } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,9 @@ export default function WeaponComparator() {
   const [stats, setStats] = useState<ComparatorStats | null>(null);
   const [isProcessing, setIsProcessing] = useState<false | 1 | 2>(false);
   const { toast } = useToast();
+
+  const weapon1DisplayName = useMemo(() => weapon1Stats?.name || "Weapon 1", [weapon1Stats]);
+  const weapon2DisplayName = useMemo(() => weapon2Stats?.name || "Weapon 2", [weapon2Stats]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
     const file = e.target.files?.[0];
@@ -59,12 +62,12 @@ export default function WeaponComparator() {
 
     try {
         const { name, ...extractedStats } = await extractStatsFromImage(croppedDataUrl);
-        const extractedName = name || 'Unknown Weapon';
+        const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
         
         if (weaponNumber === 1) {
-            setWeapon1Stats({ name: extractedName, ...extractedStats });
+            setWeapon1Stats({ name: defaultName, ...extractedStats });
         } else {
-            setWeapon2Stats({ name: extractedName, ...extractedStats });
+            setWeapon2Stats({ name: defaultName, ...extractedStats });
         }
     } catch (err) {
         console.error(err);
@@ -85,15 +88,13 @@ export default function WeaponComparator() {
       });
       return;
     }
-    if(!weapon1Stats.name || weapon1Stats.name === "Unknown Weapon" || !weapon2Stats.name || weapon2Stats.name === "Unknown Weapon") {
-        toast({
-            title: 'Missing Weapon Name',
-            description: 'Please enter a name for both weapons.',
-            variant: 'destructive',
-        });
-        return;
-    }
-    setStats({ weapon1Stats, weapon2Stats });
+
+    const statsToCompare: ComparatorStats = {
+      weapon1Stats: { ...weapon1Stats, name: weapon1DisplayName },
+      weapon2Stats: { ...weapon2Stats, name: weapon2DisplayName }
+    };
+
+    setStats(statsToCompare);
   };
   
   const handleStatChange = (weaponNumber: 1 | 2, statName: keyof WeaponStats, value: string) => {
@@ -113,10 +114,10 @@ export default function WeaponComparator() {
   };
 
   const handleNameChange = (weaponNumber: 1 | 2, value: string) => {
-    if (weaponNumber === 1 && weapon1Stats) {
-      setWeapon1Stats({ ...weapon1Stats, name: value });
-    } else if (weaponNumber === 2 && weapon2Stats) {
-      setWeapon2Stats({ ...weapon2Stats, name: value });
+    if (weaponNumber === 1) {
+      setWeapon1Stats(prev => prev ? { ...prev, name: value } : { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, mobility: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
+    } else {
+      setWeapon2Stats(prev => prev ? { ...prev, name: value } : { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, mobility: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
     }
   }
 
@@ -133,7 +134,7 @@ export default function WeaponComparator() {
           weaponNumber={1}
           previewUrl={weapon1Preview}
           onFileChange={(e) => handleFileChange(e, 1)}
-          weaponName={weapon1Stats?.name || ''}
+          weaponName={weapon1DisplayName}
           onNameChange={(e) => handleNameChange(1, e.target.value)}
           stats={weapon1Stats}
           onStatChange={(stat, value) => handleStatChange(1, stat, value)}
@@ -143,7 +144,7 @@ export default function WeaponComparator() {
           weaponNumber={2}
           previewUrl={weapon2Preview}
           onFileChange={(e) => handleFileChange(e, 2)}
-          weaponName={weapon2Stats?.name || ''}
+          weaponName={weapon2DisplayName}
           onNameChange={(e) => handleNameChange(2, e.target.value)}
           stats={weapon2Stats}
           onStatChange={(stat, value) => handleStatChange(2, stat, value)}

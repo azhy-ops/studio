@@ -2,7 +2,7 @@
 "use client";
 
 import Image from 'next/image';
-import type { ChangeEvent, ReactNode } from 'react';
+import type { ChangeEvent, ReactNode, FocusEvent } from 'react';
 import { UploadCloud, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -65,6 +65,10 @@ const WeaponUploader = ({
 }: WeaponUploaderProps) => {
   const inputId = `file-upload-${weaponNumber}`;
 
+  const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
+    event.target.select();
+  };
+
   return (
     <div className="space-y-3">
        <Alert className="text-sm border-0">
@@ -115,9 +119,10 @@ const WeaponUploader = ({
           <div className="relative">
             <Input
               type="text"
-              placeholder={isSingleUploader ? 'Weapon Name (Editable)' : `Weapon ${weaponNumber} Name (Editable)`}
+              placeholder={isSingleUploader ? 'Weapon Name' : `Weapon ${weaponNumber} Name`}
               value={weaponName}
               onChange={onNameChange}
+              onFocus={handleFocus}
               className="pr-8"
               disabled={!stats}
             />
