@@ -50,7 +50,7 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
         <DialogHeader>
           <DialogTitle>Crop Image</DialogTitle>
           <DialogDescription>
-            Drag the box to select the stats bar. Use the slider to zoom. Adjust the selection to focus only on the weapon's stats area for best results.
+            Resize and drag the box to fit the weapon stats area. Use the slider to zoom for better precision.
           </DialogDescription>
         </DialogHeader>
         <div className="relative h-[60vh] overflow-hidden bg-muted">
@@ -63,6 +63,8 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
                     onCropChange={setCrop}
                     onZoomChange={setZoom}
                     onCropComplete={onCropPixelsComplete}
+                    showGrid={true}
+                    cropShape="rect"
                 />
             )}
         </div>
@@ -79,7 +81,7 @@ export function ImageCropperDialog({ src, onCropComplete, onClose, isProcessing 
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isProcessing}>Cancel</Button>
-          <Button onClick={handleCrop} disabled={isProcessing}>
+          <Button onClick={handleCrop} disabled={isProcessing || !croppedAreaPixels}>
             {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isProcessing ? 'Analyzing...' : 'Crop & Analyze'}
           </Button>
