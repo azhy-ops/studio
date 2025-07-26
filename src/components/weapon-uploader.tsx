@@ -96,23 +96,6 @@ const WeaponUploader = ({
 
   return (
     <div className="space-y-3">
-       {weaponNumber === 1 && !isSingleUploader && (
-        <Alert className="text-sm">
-          <AlertDescription>
-           ⚠️ Tip: For best results, crop the image to only show the weapon's stats. Double-check the extracted values and correct any inaccurate numbers manually before analysis.
-          </AlertDescription>
-        </Alert>
-      )}
-       {weaponNumber === 2 && !isSingleUploader && (
-        <div className="h-[54px] hidden md:block"></div>
-      )}
-       {isSingleUploader && (
-        <Alert className="text-sm">
-          <AlertDescription>
-           ⚠️ Tip: For best results, crop the image to only show the weapon's stats. Double-check the extracted values and correct any inaccurate numbers manually before analysis.
-          </AlertDescription>
-        </Alert>
-       )}
       <Card className="flex flex-col items-center justify-center transition-all hover:border-accent">
         <CardContent className="p-4 w-full space-y-2">
           <div
