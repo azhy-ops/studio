@@ -10,7 +10,7 @@ import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import type { WeaponStats } from '@/lib/ocr';
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface WeaponUploaderProps {
   weaponNumber: 1 | 2;
@@ -71,11 +71,16 @@ const WeaponUploader = ({
 
   return (
     <div className="space-y-3">
-       <Alert className="text-sm border-0">
+      {weaponNumber === 1 && (
+        <Alert className="text-sm">
           <AlertDescription>
-            Tip: For better stat detection, please crop your image before uploading. Make sure only the weapon stats area is visible.
+           ⚠️ Tip: For best results, crop the image to only show the weapon's stats. Double-check the extracted values and correct any inaccurate numbers manually before analysis.
           </AlertDescription>
         </Alert>
+      )}
+       {weaponNumber === 2 && (
+        <div className="h-[54px] hidden md:block"></div>
+      )}
       <Card className="flex flex-col items-center justify-center transition-all hover:border-accent">
         <CardContent className="p-4 w-full space-y-2">
           <label
