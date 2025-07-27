@@ -3,10 +3,11 @@ import Script from 'next/script';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
-  title: 'Weapon Comparator',
-  description: 'Upload weapon screenshots and compare their stats.',
+  title: 'Weapon Comparator | Analyze & Compare In-Game Weapon Stats',
+  description: 'Upload screenshots of your favorite FPS weapons to automatically extract and compare stats like damage, fire rate, accuracy, and more. Make data-driven decisions for your perfect loadout.',
 };
 
 export default function RootLayout({
@@ -24,8 +25,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={cn('font-body antialiased')}>
-        {children}
+      <body className={cn('font-body antialiased flex flex-col min-h-screen')}>
+        <div className="flex-grow">
+          {children}
+        </div>
+        <Footer />
         <Toaster />
       </body>
     </html>
