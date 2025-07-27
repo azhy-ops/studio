@@ -31,9 +31,6 @@ export default function WeaponComparator() {
   const [isProcessing, setIsProcessing] = useState<false | 1 | 2>(false);
   const { toast } = useToast();
 
-  const weapon1DisplayName = useMemo(() => weapon1Stats?.name || "Weapon 1", [weapon1Stats]);
-  const weapon2DisplayName = useMemo(() => weapon2Stats?.name || "Weapon 2", [weapon2Stats]);
-
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -91,8 +88,8 @@ export default function WeaponComparator() {
     }
 
     const statsToCompare: ComparatorStats = {
-      weapon1Stats: { ...weapon1Stats, name: weapon1DisplayName },
-      weapon2Stats: { ...weapon2Stats, name: weapon2DisplayName }
+      weapon1Stats: { ...weapon1Stats, name: weapon1Stats.name || 'Weapon 1' },
+      weapon2Stats: { ...weapon2Stats, name: weapon2Stats.name || 'Weapon 2' }
     };
 
     setStats(statsToCompare);
@@ -143,7 +140,7 @@ export default function WeaponComparator() {
           weaponNumber={1}
           previewUrl={weapon1Preview}
           onFileChange={(e) => handleFileChange(e, 1)}
-          weaponName={weapon1DisplayName}
+          weaponName={weapon1Stats?.name}
           onNameChange={(e) => handleNameChange(1, e.target.value)}
           onNameBlur={(e) => handleNameBlur(1, e)}
           stats={weapon1Stats}
@@ -154,7 +151,7 @@ export default function WeaponComparator() {
           weaponNumber={2}
           previewUrl={weapon2Preview}
           onFileChange={(e) => handleFileChange(e, 2)}
-          weaponName={weapon2DisplayName}
+          weaponName={weapon2Stats?.name}
           onNameChange={(e) => handleNameChange(2, e.target.value)}
           onNameBlur={(e) => handleNameBlur(2, e)}
           stats={weapon2Stats}

@@ -26,7 +26,7 @@ interface WeaponUploaderProps {
   weaponNumber: 1 | 2;
   previewUrl: string | null;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  weaponName: string;
+  weaponName?: string;
   onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onNameBlur?: (event: FocusEvent<HTMLInputElement>) => void;
   isSingleUploader?: boolean;
@@ -96,6 +96,8 @@ const WeaponUploader = ({
     setIsPreviewOpen(false);
     fileInputRef.current?.click();
   };
+  
+  const defaultName = isSingleUploader ? 'Weapon Name' : `Weapon ${weaponNumber}`;
 
   return (
     <div className="space-y-3">
@@ -143,8 +145,8 @@ const WeaponUploader = ({
           <div className="relative">
             <Input
               type="text"
-              placeholder={isSingleUploader ? 'Weapon Name' : `Weapon ${weaponNumber} Name`}
-              value={weaponName}
+              placeholder={defaultName}
+              value={weaponName ?? ''}
               onChange={onNameChange}
               onFocus={handleFocus}
               onBlur={onNameBlur}
@@ -188,7 +190,7 @@ const WeaponUploader = ({
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{weaponName || `Weapon ${weaponNumber}`}</DialogTitle>
+            <DialogTitle>{weaponName || defaultName}</DialogTitle>
           </DialogHeader>
           <div className="relative aspect-video">
             {previewUrl && (
