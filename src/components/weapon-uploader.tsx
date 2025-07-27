@@ -4,23 +4,22 @@
 import Image from 'next/image';
 import type { ChangeEvent, ReactNode, FocusEvent } from 'react';
 import { useRef, useState } from 'react';
-import { UploadCloud, Pencil, X } from 'lucide-react';
+import { UploadCloud, Pencil, X, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import type { WeaponStats } from '@/lib/ocr';
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface WeaponUploaderProps {
   weaponNumber: 1 | 2;
@@ -47,11 +46,25 @@ const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
   'muzzleVelocity',
 ];
 
-const StatInput = ({ label, value, onChange }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void }) => {
+const StatInput = ({ label, value, onChange, isMissing }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void, isMissing: boolean }) => {
     const displayLabel = label === 'handling' ? 'Handling & Mobility' : label.replace(/([A-Z])/g, ' $1');
     return (
     <div className='grid grid-cols-2 items-center gap-2'>
-        <Label htmlFor={label.toLowerCase()} className='text-right text-muted-foreground capitalize text-xs'>{displayLabel}</Label>
+        <Label htmlFor={label.toLowerCase()} className='text-right text-muted-foreground capitalize text-xs flex items-center justify-end gap-1'>
+            {isMissing && (
+                 <TooltipProvider>
+                    <Tooltip delayDuration={0}>
+                        <TooltipTrigger>
+                            <AlertTriangle className="h-3 w-3 text-amber-500" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>This stat was not detected. If it's not available in your game, you can ignore this warning.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )}
+            {displayLabel}
+        </Label>
         <Input
             id={label.toLowerCase()}
             type="number"
@@ -103,6 +116,9 @@ const WeaponUploader = ({
     <div className="space-y-3">
       <Card className="flex flex-col items-center justify-center transition-all hover:border-accent">
         <CardContent className="p-4 w-full space-y-2">
+           <div className="flex flex-col items-center justify-center w-full">
+            {children}
+          </div>
           <div
             onClick={handleImageContainerClick}
             className="relative flex flex-col items-center justify-center w-full aspect-[16/9] border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition-colors"
@@ -139,8 +155,6 @@ const WeaponUploader = ({
               disabled={isLoading}
             />
           </div>
-          
-          {children}
 
           <div className="relative">
             <Input
@@ -167,6 +181,7 @@ const WeaponUploader = ({
                           label={statKey}
                           value={value}
                           onChange={(e) => onStatChange(statKey, e.target.value)}
+                          isMissing={value === 0}
                       />
                     )
                   })}

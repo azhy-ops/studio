@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, ChangeEvent, useMemo, FocusEvent } from 'react';
-import { Dices } from 'lucide-react';
+import { Dices, AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +11,7 @@ import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
 import { ImageCropperDialog } from './image-cropper-dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ComparatorStats {
     weapon1Stats: WeaponStats;
@@ -111,8 +111,9 @@ export default function WeaponComparator() {
     }
   };
 
-  const handleNameChange = (weaponNumber: 1 | 2, value: string) => {
+  const handleNameChange = (weaponNumber: 1 | 2, e: ChangeEvent<HTMLInputElement>) => {
     const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
+    const value = e.target.value;
     setStats(prev => {
         if (!prev) return { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 };
         return { ...prev, name: value };
@@ -135,13 +136,25 @@ export default function WeaponComparator() {
             onCropComplete={handleCropComplete}
             isProcessing={!!isProcessing}
         />
+       <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Pro Tip for Accurate Results</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-1 mt-2 text-xs">
+              <li>Use the crop box to highlight only the weapon’s stats — this helps the system read the numbers more accurately.</li>
+              <li>Some games might use different stat names (like "Handling" vs "Mobility"), or leave some out completely. Missing stats won’t affect the calculation.</li>
+              <li>After cropping, please double-check the extracted numbers and fix any incorrect values before analysis.</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+
       <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
         <WeaponUploader
           weaponNumber={1}
           previewUrl={weapon1Preview}
           onFileChange={(e) => handleFileChange(e, 1)}
           weaponName={weapon1Stats?.name}
-          onNameChange={(e) => handleNameChange(1, e.target.value)}
+          onNameChange={(e) => handleNameChange(1, e)}
           onNameBlur={(e) => handleNameBlur(1, e)}
           stats={weapon1Stats}
           onStatChange={(stat, value) => handleStatChange(1, stat, value)}
@@ -152,7 +165,7 @@ export default function WeaponComparator() {
           previewUrl={weapon2Preview}
           onFileChange={(e) => handleFileChange(e, 2)}
           weaponName={weapon2Stats?.name}
-          onNameChange={(e) => handleNameChange(2, e.target.value)}
+          onNameChange={(e) => handleNameChange(2, e)}
           onNameBlur={(e) => handleNameBlur(2, e)}
           stats={weapon2Stats}
           onStatChange={(stat, value) => handleStatChange(2, stat, value)}
