@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, ChangeEvent, useMemo } from 'react';
+import { useState, ChangeEvent, useMemo, FocusEvent } from 'react';
 import { Dices } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -115,10 +115,18 @@ export default function WeaponComparator() {
   };
 
   const handleNameChange = (weaponNumber: 1 | 2, value: string) => {
-    if (weaponNumber === 1) {
-      setWeapon1Stats(prev => prev ? { ...prev, name: value } : { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
-    } else {
-      setWeapon2Stats(prev => prev ? { ...prev, name: value } : { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
+    const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
+    setStats(prev => {
+        if (!prev) return { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 };
+        return { ...prev, name: value };
+    });
+  }
+
+  const handleNameBlur = (weaponNumber: 1 | 2, e: FocusEvent<HTMLInputElement>) => {
+    const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
+    const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
+    if (e.target.value.trim() === '') {
+        setStats(prev => prev ? { ...prev, name: defaultName } : { name: defaultName, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
     }
   }
 
@@ -137,6 +145,7 @@ export default function WeaponComparator() {
           onFileChange={(e) => handleFileChange(e, 1)}
           weaponName={weapon1DisplayName}
           onNameChange={(e) => handleNameChange(1, e.target.value)}
+          onNameBlur={(e) => handleNameBlur(1, e)}
           stats={weapon1Stats}
           onStatChange={(stat, value) => handleStatChange(1, stat, value)}
           isLoading={isProcessing === 1}
@@ -147,6 +156,7 @@ export default function WeaponComparator() {
           onFileChange={(e) => handleFileChange(e, 2)}
           weaponName={weapon2DisplayName}
           onNameChange={(e) => handleNameChange(2, e.target.value)}
+          onNameBlur={(e) => handleNameBlur(2, e)}
           stats={weapon2Stats}
           onStatChange={(stat, value) => handleStatChange(2, stat, value)}
           isLoading={isProcessing === 2}

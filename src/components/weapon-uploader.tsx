@@ -28,6 +28,7 @@ interface WeaponUploaderProps {
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   weaponName: string;
   onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onNameBlur?: (event: FocusEvent<HTMLInputElement>) => void;
   isSingleUploader?: boolean;
   stats: WeaponStats | null;
   onStatChange: (statName: keyof WeaponStats, value: string) => void;
@@ -67,7 +68,8 @@ const WeaponUploader = ({
   previewUrl, 
   onFileChange, 
   weaponName, 
-  onNameChange, 
+  onNameChange,
+  onNameBlur, 
   isSingleUploader = false,
   stats,
   onStatChange,
@@ -145,6 +147,7 @@ const WeaponUploader = ({
               value={weaponName}
               onChange={onNameChange}
               onFocus={handleFocus}
+              onBlur={onNameBlur}
               className="pr-8"
               disabled={!stats}
             />
