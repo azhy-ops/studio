@@ -10,7 +10,6 @@ export interface WeaponStats {
     range: number;
     accuracy: number;
     control: number;
-    mobility: number;
     handling: number;
     fireRate: number;
     muzzleVelocity: number;
@@ -69,10 +68,14 @@ async function extractStatsFromImage(dataUri: string): Promise<WeaponStats> {
     const range = parseStat(text, 'Range');
     const accuracy = parseStat(text, 'Accuracy');
     const control = parseStat(text, 'Control');
-    const mobility = parseStat(text, 'Mobility');
     const handling = parseStat(text, 'Handling');
     const fireRate = parseStat(text, 'Fire Rate');
     const muzzleVelocity = parseStat(text, 'Muzzle Velocity');
+
+    // Combine Mobility into Handling
+    const mobility = parseStat(text, 'Mobility');
+    const combinedHandling = handling > 0 ? handling : mobility;
+
 
     const stats: WeaponStats = {
         name: 'Unknown Weapon',
@@ -81,8 +84,7 @@ async function extractStatsFromImage(dataUri: string): Promise<WeaponStats> {
         range,
         accuracy,
         control,
-        mobility,
-        handling,
+        handling: combinedHandling,
         fireRate,
         muzzleVelocity,
         ttk: 0

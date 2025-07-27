@@ -35,7 +35,7 @@ function AnalysisSkeleton() {
                 </div>
             </div>
             <div className='space-y-3 pt-4'>
-                {Array.from({ length: 9 }).map((_, i) => (
+                {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="flex items-center gap-4">
                         <Skeleton className="h-4 w-28" />
                         <Skeleton className="h-3 w-full" />
@@ -60,7 +60,6 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
     'control',
     'handling',
     'stability',
-    'mobility',
     'muzzleVelocity',
   ];
 

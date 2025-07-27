@@ -116,9 +116,9 @@ export default function WeaponComparator() {
 
   const handleNameChange = (weaponNumber: 1 | 2, value: string) => {
     if (weaponNumber === 1) {
-      setWeapon1Stats(prev => prev ? { ...prev, name: value } : { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, mobility: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
+      setWeapon1Stats(prev => prev ? { ...prev, name: value } : { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
     } else {
-      setWeapon2Stats(prev => prev ? { ...prev, name: value } : { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, mobility: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
+      setWeapon2Stats(prev => prev ? { ...prev, name: value } : { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
     }
   }
 

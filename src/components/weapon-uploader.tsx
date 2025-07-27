@@ -43,13 +43,14 @@ const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
   'control',
   'handling',
   'stability',
-  'mobility',
   'muzzleVelocity',
 ];
 
-const StatInput = ({ label, value, onChange }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void }) => (
+const StatInput = ({ label, value, onChange }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void }) => {
+    const displayLabel = label === 'handling' ? 'Handling & Mobility' : label.replace(/([A-Z])/g, ' $1');
+    return (
     <div className='grid grid-cols-2 items-center gap-2'>
-        <Label htmlFor={label.toLowerCase()} className='text-right text-muted-foreground capitalize text-xs'>{label.replace(/([A-Z])/g, ' $1')}</Label>
+        <Label htmlFor={label.toLowerCase()} className='text-right text-muted-foreground capitalize text-xs'>{displayLabel}</Label>
         <Input
             id={label.toLowerCase()}
             type="number"
@@ -59,7 +60,7 @@ const StatInput = ({ label, value, onChange }: { label: string; value: number; o
             placeholder="0"
         />
     </div>
-)
+)};
 
 const WeaponUploader = ({ 
   weaponNumber, 
@@ -169,7 +170,7 @@ const WeaponUploader = ({
 
           {isLoading && !stats && (
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
-                  {Array.from({ length: 9 }).map((_, i) => (
+                  {Array.from({ length: 8 }).map((_, i) => (
                       <div key={i} className="grid grid-cols-2 items-center gap-2">
                            <Skeleton className="h-4 w-16 justify-self-end" />
                            <Skeleton className="h-8 w-full" />

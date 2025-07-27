@@ -10,8 +10,7 @@ const statDescriptions: { [key: string]: string } = {
   'Damage': 'How much health each shot removes from the enemy.',
   'Range': 'How far the weapon remains effective before damage drop-off.',
   'Control': 'How easy it is to manage the weapon’s recoil.',
-  'Handling': 'How fast you can aim down sights and switch weapons.',
-  'Mobility': 'How fast you can move while holding the weapon. Affects handling.',
+  'Handling & Mobility': 'How fast you can aim down sights and switch weapons. Affects handling.',
   'Stability': 'How steady the aim stays while shooting continuously.',
   'Accuracy': 'How closely shots follow the crosshair during firing.',
   'Fire Rate': 'How many bullets the gun fires per minute (RPM).',
@@ -19,8 +18,7 @@ const statDescriptions: { [key: string]: string } = {
   'damage': 'How much health each shot removes from the enemy.',
   'range': 'How far the weapon remains effective before damage drop-off.',
   'control': 'How easy it is to manage the weapon’s recoil.',
-  'handling': 'How fast you can aim down sights and switch weapons.',
-  'mobility': 'How fast you can move while holding the weapon. Affects handling.',
+  'handling': 'Handling & Mobility',
   'stability': 'How steady the aim stays while shooting continuously.',
   'accuracy': 'How closely shots follow the crosshair during firing.',
   'fireRate': 'How many bullets the gun fires per minute (RPM).',
@@ -39,12 +37,13 @@ const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarPr
   const maxStatValue = isScoreContribution ? 40 : (statName.toLowerCase() === 'firerate' || statName.toLowerCase() === 'muzzlevelocity' ? 1200 : 100);
   const barWidth = Math.min((value / maxStatValue) * 100, 100);
   const normalizedStatName = statName.toLowerCase().replace(/\s/g, '');
+  const displayLabel = label === 'handling' ? 'Handling & Mobility' : label.replace(/([A-Z])/g, ' $1');
 
   return (
     <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-4">
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground w-32">
         <StatIcon name={normalizedStatName} className="h-5 w-5" />
-        <span className='capitalize'>{label.replace(/([A-Z])/g, ' $1')}</span>
+        <span className='capitalize'>{displayLabel}</span>
         {statDescriptions[label] && (
             <TooltipProvider>
                 <Tooltip delayDuration={0}>
@@ -91,11 +90,13 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
   const bar1Width = Math.min((value1 / maxStatValue) * 100, 100);
   const bar2Width = Math.min((value2 / maxStatValue) * 100, 100);
 
-  const normalizedStatName = statName.toLowerCase().replace(/\s/g, '');
+  const normalizedStatName = statName === 'Handling & Mobility' ? 'handling&mobility' : statName.toLowerCase().replace(/\s/g, '');
 
   const percentageDiff = value1 !== value2 ? Math.round(
     ((value1 - value2) / Math.max(value1, value2, 1)) * 100
   ) : 0;
+  
+  const displayStatName = statName;
 
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
@@ -138,17 +139,17 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
         <StatIcon name={normalizedStatName} className="h-6 w-6 text-muted-foreground" />
         <div className="flex items-center gap-1.5 mt-1">
            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-             {statName}
+             {displayStatName}
              {unit && <span className="ml-1 opacity-70">({unit})</span>}
            </span>
-          {statDescriptions[statName] && (
+          {statDescriptions[displayStatName] && (
             <TooltipProvider>
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger>
                     <Info className="h-3 w-3 text-muted-foreground/70 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{statDescriptions[statName]}</p>
+                    <p>{statDescriptions[displayStatName]}</p>
                   </TooltipContent>
                 </Tooltip>
             </TooltipProvider>

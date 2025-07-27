@@ -22,7 +22,6 @@ const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
   'control',
   'handling',
   'stability',
-  'mobility',
   'muzzleVelocity',
 ];
 
@@ -53,7 +52,11 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
                 return null;
               }
 
-              const formattedStatName = statName.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+              let formattedStatName = statName.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+              if (statName === 'handling') {
+                formattedStatName = 'Handling & Mobility';
+              }
+
               let unit: string | undefined;
               if (statName === 'fireRate') unit = 'RPM';
               if (statName === 'muzzleVelocity') unit = 'm/s';
