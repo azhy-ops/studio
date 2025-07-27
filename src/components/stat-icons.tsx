@@ -1,5 +1,5 @@
 
-import { Sword, Anchor, Scaling, Crosshair, Gamepad2, Wind, ShieldQuestion, Zap, ChevronsRight, Hand, Footprints } from 'lucide-react';
+import { Sword, Anchor, Scaling, Crosshair, Gamepad2, Wind, ShieldQuestion, Zap, ChevronsRight, Hand } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -10,7 +10,7 @@ const statIconsList: { [key: string]: ComponentType<LucideProps> } = {
   accuracy: Crosshair,
   control: Gamepad2,
   handling: Hand,
-  'handling&mobility': Footprints,
+  'handling&mobility': Hand,
   firerate: Zap,
   muzzlevelocity: ChevronsRight,
 };

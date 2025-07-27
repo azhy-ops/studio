@@ -90,7 +90,7 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
   const bar1Width = Math.min((value1 / maxStatValue) * 100, 100);
   const bar2Width = Math.min((value2 / maxStatValue) * 100, 100);
 
-  const normalizedStatName = statName === 'Handling & Mobility' ? 'handling&mobility' : statName.toLowerCase().replace(/\s/g, '');
+  const normalizedStatName = statName === 'Handling & Mobility' ? 'handling' : statName.toLowerCase().replace(/\s/g, '');
 
   const percentageDiff = value1 !== value2 ? Math.round(
     ((value1 - value2) / Math.max(value1, value2, 1)) * 100
