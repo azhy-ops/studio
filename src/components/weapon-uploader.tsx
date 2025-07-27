@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import type { ChangeEvent, ReactNode, FocusEvent } from 'react';
 import { useRef, useState } from 'react';
-import { UploadCloud, Pencil, X, AlertTriangle } from 'lucide-react';
+import { UploadCloud, Pencil, X, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from './ui/skeleton';
@@ -48,6 +48,7 @@ const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
 
 const StatInput = ({ label, value, onChange, isMissing }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void, isMissing: boolean }) => {
     const displayLabel = label === 'handling' ? 'Handling & Mobility' : label.replace(/([A-Z])/g, ' $1');
+    const isSuspicious = value > 0 && value < 10;
     return (
     <div className='grid grid-cols-2 items-center gap-2'>
         <Label htmlFor={label.toLowerCase()} className='text-right text-muted-foreground capitalize text-xs flex items-center justify-end gap-1'>
@@ -59,6 +60,18 @@ const StatInput = ({ label, value, onChange, isMissing }: { label: string; value
                         </TooltipTrigger>
                         <TooltipContent>
                             <p>This stat was not detected. If it's not available in your game, you can ignore this warning.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )}
+            {isSuspicious && (
+                 <TooltipProvider>
+                    <Tooltip delayDuration={0}>
+                        <TooltipTrigger>
+                            <AlertCircle className="h-3 w-3 text-destructive" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>This value might be incomplete. Please double-check and correct it manually.</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
