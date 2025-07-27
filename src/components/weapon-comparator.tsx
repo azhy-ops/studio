@@ -118,7 +118,7 @@ export default function WeaponComparator() {
         if (!prev) return { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 };
         return { ...prev, name: value };
     });
-  }
+  };
 
   const handleNameBlur = (weaponNumber: 1 | 2, e: FocusEvent<HTMLInputElement>) => {
     const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
@@ -142,7 +142,7 @@ export default function WeaponComparator() {
           <AlertDescription>
             <ul className="list-disc list-inside space-y-1 mt-2 text-xs">
               <li>Use the crop box to highlight only the weapon’s stats — this helps the system read the numbers more accurately.</li>
-              <li>Some games might use different stat names (like "Handling" vs "Mobility"), or leave some out completely. Missing stats won’t affect the calculation.</li>
+              <li>Some games might use different stat names (like "Handling" or "Mobility"), or leave some out completely. Missing stats won’t affect the calculation.</li>
               <li>After cropping, please double-check the extracted numbers and fix any incorrect values before analysis.</li>
             </ul>
           </AlertDescription>
