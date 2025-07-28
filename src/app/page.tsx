@@ -12,7 +12,7 @@ export default function Home() {
             weapon compare
           </h1>
           <p className="mt-2 text-lg text-muted-foreground max-w-3xl mx-auto">
-            Compare your weapon stats
+            Upload screenshots of your favorite FPS weapons to automatically extract and compare stats like damage, fire rate, accuracy, and more. Make data-driven decisions for your perfect loadout.
           </p>
         </header>
         <div className="pt-6">
