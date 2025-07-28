@@ -1,8 +1,9 @@
+
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Privacy Policy | Weapon Comparator',
-    description: 'Our Privacy Policy explains how Weapon Comparator handles user data, including uploaded images and information, to ensure your privacy and security.',
+    title: 'Privacy Policy | weapon compare',
+    description: 'Our Privacy Policy explains how weapon compare handles user data, including uploaded images and information, to ensure your privacy and security.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -16,7 +17,7 @@ export default function PrivacyPolicyPage() {
                 </header>
                 <div className="prose prose-invert mx-auto max-w-prose text-lg text-muted-foreground space-y-4">
                     <p>
-                        Your privacy is important to us. It is Weapon Comparator's policy to respect your privacy regarding any information we may collect from you across our website.
+                        Your privacy is important to us. It is weapon compare's policy to respect your privacy regarding any information we may collect from you across our website.
                     </p>
                     <h2 className="text-2xl font-headline text-foreground">Information We Collect</h2>
                     <p>

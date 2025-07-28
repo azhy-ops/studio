@@ -9,10 +9,10 @@ export default function Home() {
       <div className="w-full max-w-6xl space-y-8">
         <header className="text-center">
           <h1 className="font-headline text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl">
-            Weapon Comparator
+            weapon compare
           </h1>
           <p className="mt-2 text-lg text-muted-foreground max-w-3xl mx-auto">
-            Weapon Compare helps gamers analyze and compare FPS weapon stats with OCR support. Built with partial AI features for better loadout decisions.
+            Compare your weapon stats
           </p>
         </header>
         <div className="pt-6">

@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import './globals.css';
@@ -6,7 +7,7 @@ import { cn } from '@/lib/utils';
 import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
-  title: 'Weapon Comparator | Analyze & Compare In-Game Weapon Stats',
+  title: 'weapon compare | Analyze & Compare In-Game Weapon Stats',
   description: 'Upload screenshots of your favorite FPS weapons to automatically extract and compare stats like damage, fire rate, accuracy, and more. Make data-driven decisions for your perfect loadout.',
 };
 

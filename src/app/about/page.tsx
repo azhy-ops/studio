@@ -1,8 +1,9 @@
+
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'About Us | Weapon Comparator',
-    description: 'Learn more about Weapon Comparator, our mission to help gamers make better decisions with data-driven tools, and the technology behind our platform.',
+    title: 'About Us | weapon compare',
+    description: 'Learn more about weapon compare, our mission to help gamers make better decisions with data-driven tools, and the technology behind our platform.',
 };
 
 export default function AboutPage() {
@@ -16,7 +17,7 @@ export default function AboutPage() {
                 </header>
                 <div className="prose prose-invert mx-auto max-w-prose text-lg text-muted-foreground">
                     <p>
-                        Welcome to Weapon Comparator, the ultimate tool for serious gamers and FPS enthusiasts. Our mission is to empower players like you with the data needed to make smarter decisions about your in-game loadouts.
+                        Welcome to weapon compare, the ultimate tool for serious gamers and FPS enthusiasts. Our mission is to empower players like you with the data needed to make smarter decisions about your in-game loadouts.
                     </p>
                     <p>
                         We understand that in competitive gaming, every millisecond and every stat point counts. That's why we built a platform that takes the guesswork out of comparing weapon stats. By using Optical Character Recognition (OCR) technology, we allow you to upload screenshots directly from your game and get a detailed, side-by-side comparison in seconds.
@@ -25,7 +26,7 @@ export default function AboutPage() {
                         Our team is composed of passionate gamers and developers who believe in the power of data. We are constantly working to improve our tool, refine our algorithms, and support more games to ensure you have the most accurate and up-to-date information at your fingertips.
                     </p>
                     <p>
-                        Thank you for using Weapon Comparator. We hope our tool helps you dominate the competition and achieve victory.
+                        Thank you for using weapon compare. We hope our tool helps you dominate the competition and achieve victory.
                     </p>
                 </div>
             </div>

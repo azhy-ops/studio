@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 
 export const metadata: Metadata = {
-    title: 'Contact Us | Weapon Comparator',
-    description: 'Get in touch with the Weapon Comparator team. We welcome your feedback, suggestions, and inquiries. Fill out the contact form to reach us.',
+    title: 'Contact Us | weapon compare',
+    description: 'Get in touch with the weapon compare team. We welcome your feedback, suggestions, and inquiries. Fill out the contact form to reach us.',
 };
 
 export default function ContactPage() {
