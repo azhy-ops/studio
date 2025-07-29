@@ -39,11 +39,11 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
     },
     "Long Range": {
         damage: 0.25,
-        accuracy: 0.30,
-        control: 0.25,
-        stability: 0.20,
+        accuracy: 0.20,
+        control: 0.30,
+        stability: 0.30,
         handling: 0.10,
-        fireRate: 0.15,
+        fireRate: 0.10,
         muzzleVelocity: 0.15,
     },
 };
