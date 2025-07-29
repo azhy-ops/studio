@@ -38,12 +38,12 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
         muzzleVelocity: 0.07,
     },
     "Long Range": {
-        damage: 0.1,
-        accuracy: 0.2,
-        control: 0.15,
-        stability: 0.1,
-        handling: 0,
-        fireRate: 0.05,
+        damage: 0.25,
+        accuracy: 0.30,
+        control: 0.25,
+        stability: 0.20,
+        handling: 0.10,
+        fireRate: 0.15,
         muzzleVelocity: 0.15,
     },
 };
@@ -51,7 +51,7 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
 const rangeFormulas: Record<CombatRange, (range: number) => number> = {
     "Close Range": (range) => (100 - range) * 0.03,
     "Mid Range": (range) => range * 0.10,
-    "Long Range": (range) => range * 0.25,
+    "Long Range": (range) => range * 0.30,
 };
 
 const rangeDistances: Record<CombatRange, string> = {
