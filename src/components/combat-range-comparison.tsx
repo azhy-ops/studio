@@ -18,11 +18,10 @@ interface ComparatorStats {
 
 const normalizeStat = (value: number, max: number) => (value / max) * 100;
 
-const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk'>, number>> = {
+const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk' | 'range'>, number>> = {
     "Close Range": {
         damage: 0.15,
-        range: 0,
-        accuracy: 0.10,
+        accuracy: 0.07,
         control: 0.15,
         stability: 0.03,
         handling: 0.25,
@@ -31,7 +30,6 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
     },
     "Mid Range": {
         damage: 0.2,
-        range: 0.15,
         accuracy: 0.2,
         control: 0.2,
         stability: 0.1,
@@ -41,7 +39,6 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
     },
     "Long Range": {
         damage: 0.1,
-        range: 0.25,
         accuracy: 0.2,
         control: 0.15,
         stability: 0.1,
@@ -49,6 +46,12 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
         fireRate: 0.05,
         muzzleVelocity: 0.15,
     },
+};
+
+const rangeFormulas: Record<CombatRange, (range: number) => number> = {
+    "Close Range": (range) => (100 - range) * 0.03,
+    "Mid Range": (range) => range * 0.15,
+    "Long Range": (range) => range * 0.25,
 };
 
 const rangeDistances: Record<CombatRange, string> = {
@@ -59,6 +62,7 @@ const rangeDistances: Record<CombatRange, string> = {
 
 const calculateScore = (stats: WeaponStats, range: CombatRange): number => {
   const formula = formulas[range];
+  const rangeFormula = rangeFormulas[range];
   let score = 0;
   
   const normalizedStats = {
@@ -71,6 +75,9 @@ const calculateScore = (stats: WeaponStats, range: CombatRange): number => {
     const statKey = key as keyof typeof formula;
     score += (normalizedStats[statKey] || 0) * formula[statKey];
   }
+  
+  score += rangeFormula(stats.range || 0);
+
   return parseFloat(score.toFixed(2));
 };
 
