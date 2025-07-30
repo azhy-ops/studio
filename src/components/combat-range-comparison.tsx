@@ -30,7 +30,7 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
     },
     "Mid Range": {
         damage: 0.25,
-        accuracy: 0.20,
+        accuracy: 0.10,
         control: 0.20,
         stability: 0.15,
         handling: 0.20,
