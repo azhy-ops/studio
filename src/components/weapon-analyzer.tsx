@@ -11,6 +11,7 @@ import WeaponUploader from '@/components/weapon-uploader';
 import { Loader2 } from 'lucide-react';
 import { SimpleStatBar } from './stat-bar';
 import { ImageCropperDialog } from './image-cropper-dialog';
+import WeaponPerformanceChart from './weapon-performance-chart';
 
 interface AnalysisOutput {
     stats: WeaponStats;
@@ -87,6 +88,8 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
                 </p>
             </div>
         </div>
+
+        <WeaponPerformanceChart stats={stats} />
 
         <div>
             <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
