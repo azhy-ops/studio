@@ -4,7 +4,6 @@
 import { useMemo } from 'react';
 import type { WeaponStats } from '@/lib/ocr';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface WeaponPerformanceChartProps {
   stats: WeaponStats;

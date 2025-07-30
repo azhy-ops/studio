@@ -11,7 +11,6 @@ import WeaponUploader from '@/components/weapon-uploader';
 import { Loader2 } from 'lucide-react';
 import { SimpleStatBar } from './stat-bar';
 import { ImageCropperDialog } from './image-cropper-dialog';
-import WeaponPerformanceChart from './weapon-performance-chart';
 
 interface AnalysisOutput {
     stats: WeaponStats;
@@ -29,10 +28,6 @@ function AnalysisSkeleton() {
                 <div>
                     <Skeleton className="h-4 w-24 mb-2" />
                     <Skeleton className="h-10 w-32" />
-                </div>
-                <div>
-                    <Skeleton className="h-4 w-20 mb-2" />
-                    <Skeleton className="h-10 w-28" />
                 </div>
             </div>
             <div className='space-y-3 pt-4'>
@@ -88,8 +83,6 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
                 </p>
             </div>
         </div>
-
-        <WeaponPerformanceChart stats={stats} />
 
         <div>
             <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
