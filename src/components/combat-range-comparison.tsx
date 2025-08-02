@@ -8,51 +8,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Trophy } from 'lucide-react';
+import type { ComparatorStats } from './weapon-comparator';
 
 type CombatRange = "Close Range" | "Mid Range" | "Long Range";
-
-interface ComparatorStats {
-    weapon1Stats: WeaponStats;
-    weapon2Stats: WeaponStats;
-}
+type WeaponType = "SMG" | "Assault Rifle" | "LMG" | "Marksman Rifle" | "Sniper" | "Pistol";
 
 const normalizeStat = (value: number, max: number) => (value / max) * 100;
 
-const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk' | 'range'>, number>> = {
-    "Close Range": {
-        damage: 0.15,
-        accuracy: 0.10,
-        control: 0.15,
-        stability: 0.03,
-        handling: 0.25,
-        fireRate: 0.30,
-        muzzleVelocity: 0.02,
+const formulas: Record<WeaponType, Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>, number>>> = {
+    "SMG": {
+        "Close Range": { damage: 0.25, accuracy: 0.30, control: 0.30, stability: 0.20, handling: 0.50, fireRate: 0.50, muzzleVelocity: 0.10, range: 0.10 },
+        "Mid Range":   { damage: 0.40, accuracy: 0.30, control: 0.30, stability: 0.30, handling: 0.35, fireRate: 0.30, muzzleVelocity: 0.15, range: 0.30 },
+        "Long Range":  { damage: 0.40, accuracy: 0.20, control: 0.30, stability: 0.40, handling: 0.20, fireRate: 0.20, muzzleVelocity: 0.25, range: 0.30 }
     },
-    "Mid Range": {
-        damage: 0.25,
-        accuracy: 0.15,
-        control: 0.30,
-        stability: 0.30,
-        handling: 0.15,
-        fireRate: 0.15,
-        muzzleVelocity: 0.05,
+    "Assault Rifle": {
+        "Close Range": { damage: 0.30, accuracy: 0.35, control: 0.30, stability: 0.30, handling: 0.40, fireRate: 0.40, muzzleVelocity: 0.15, range: 0.15 },
+        "Mid Range":   { damage: 0.50, accuracy: 0.40, control: 0.45, stability: 0.35, handling: 0.30, fireRate: 0.30, muzzleVelocity: 0.20, range: 0.40 },
+        "Long Range":  { damage: 0.50, accuracy: 0.35, control: 0.40, stability: 0.50, handling: 0.20, fireRate: 0.20, muzzleVelocity: 0.30, range: 0.40 }
     },
-    "Long Range": {
-        damage: 0.30,
-        accuracy: 0.30,
-        control: 0.30,
-        stability: 0.30,
-        handling: 0.10,
-        fireRate: 0.10,
-        muzzleVelocity: 0.30,
+    "LMG": {
+        "Close Range": { damage: 0.35, accuracy: 0.30, control: 0.30, stability: 0.35, handling: 0.25, fireRate: 0.40, muzzleVelocity: 0.20, range: 0.20 },
+        "Mid Range":   { damage: 0.50, accuracy: 0.35, control: 0.40, stability: 0.40, handling: 0.25, fireRate: 0.30, muzzleVelocity: 0.25, range: 0.40 },
+        "Long Range":  { damage: 0.55, accuracy: 0.40, control: 0.50, stability: 0.50, handling: 0.15, fireRate: 0.20, muzzleVelocity: 0.35, range: 0.50 }
     },
+    "Marksman Rifle": {
+        "Close Range": { damage: 0.35, accuracy: 0.35, control: 0.25, stability: 0.25, handling: 0.30, fireRate: 0.30, muzzleVelocity: 0.20, range: 0.20 },
+        "Mid Range":   { damage: 0.55, accuracy: 0.45, control: 0.40, stability: 0.40, handling: 0.25, fireRate: 0.25, muzzleVelocity: 0.30, range: 0.40 },
+        "Long Range":  { damage: 0.60, accuracy: 0.50, control: 0.50, stability: 0.45, handling: 0.15, fireRate: 0.15, muzzleVelocity: 0.40, range: 0.60 }
+    },
+    "Sniper": {
+        "Close Range": { damage: 0.60, accuracy: 0.40, control: 0.25, stability: 0.30, handling: 0.20, fireRate: 0.25, muzzleVelocity: 0.30, range: 0.25 },
+        "Mid Range":   { damage: 0.65, accuracy: 0.45, control: 0.35, stability: 0.40, handling: 0.20, fireRate: 0.20, muzzleVelocity: 0.40, range: 0.50 },
+        "Long Range":  { damage: 0.70, accuracy: 0.60, control: 0.50, stability: 0.50, handling: 0.10, fireRate: 0.10, muzzleVelocity: 0.45, range: 0.60 }
+    },
+    "Pistol": {
+        "Close Range": { damage: 0.35, accuracy: 0.30, control: 0.25, stability: 0.20, handling: 0.50, fireRate: 0.40, muzzleVelocity: 0.10, range: 0.10 },
+        "Mid Range":   { damage: 0.40, accuracy: 0.35, control: 0.35, stability: 0.25, handling: 0.35, fireRate: 0.30, muzzleVelocity: 0.15, range: 0.30 },
+        "Long Range":  { damage: 0.40, accuracy: 0.30, control: 0.30, stability: 0.35, handling: 0.25, fireRate: 0.25, muzzleVelocity: 0.20, range: 0.30 }
+    }
 };
 
-const rangeFormulas: Record<CombatRange, (range: number) => number> = {
-    "Close Range": (range) => range * 0.05,
-    "Mid Range": (range) => range * 0.15,
-    "Long Range": (range) => range * 0.30,
-};
 
 const rangeDistances: Record<CombatRange, string> = {
     "Close Range": "0-20m",
@@ -61,8 +56,10 @@ const rangeDistances: Record<CombatRange, string> = {
 };
 
 const calculateScore = (stats: WeaponStats, range: CombatRange): number => {
-  const formula = formulas[range];
-  const rangeFormula = rangeFormulas[range];
+  const weaponType = stats.type as WeaponType || 'Assault Rifle';
+  const formula = formulas[weaponType]?.[range];
+  if (!formula) return 0;
+  
   let score = 0;
   
   const normalizedStats = {
@@ -75,8 +72,6 @@ const calculateScore = (stats: WeaponStats, range: CombatRange): number => {
     const statKey = key as keyof typeof formula;
     score += (normalizedStats[statKey] || 0) * formula[statKey];
   }
-  
-  score += rangeFormula(stats.range || 0);
 
   return parseFloat(score.toFixed(2));
 };
@@ -107,7 +102,7 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
       <Card className="w-full bg-card/50 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl sm:text-4xl">Combat Range Analysis</CardTitle>
-          <CardDescription>Select a combat range to see the recommended weapon.</CardDescription>
+          <CardDescription>Select a combat range to see the recommended weapon based on its type.</CardDescription>
           <div className="pt-2 flex justify-center flex-col items-center">
             <Select onValueChange={(value: CombatRange) => setSelectedRange(value)} defaultValue={selectedRange}>
               <SelectTrigger className="w-[200px] font-headline">
@@ -127,7 +122,10 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
             {/* Weapon 1 Score */}
             <div>
               <div className="flex justify-between items-baseline mb-1">
-                <h4 className="font-headline text-lg">{data.weapon1Stats.name || 'Weapon 1'}</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-headline text-lg">{data.weapon1Stats.name || 'Weapon 1'}</h4>
+                  <span className="text-xs text-muted-foreground">({data.weapon1Stats.type})</span>
+                </div>
                 <span className="font-code text-xl font-bold">{weapon1Score}</span>
               </div>
               <Progress value={(weapon1Score / maxScore) * 100} className={cn(winner === (data.weapon1Stats.name || 'Weapon 1') && '[&>div]:bg-accent')} />
@@ -135,7 +133,10 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
             {/* Weapon 2 Score */}
             <div>
               <div className="flex justify-between items-baseline mb-1">
-                <h4 className="font-headline text-lg">{data.weapon2Stats.name || 'Weapon 2'}</h4>
+                 <div className="flex items-center gap-2">
+                  <h4 className="font-headline text-lg">{data.weapon2Stats.name || 'Weapon 2'}</h4>
+                  <span className="text-xs text-muted-foreground">({data.weapon2Stats.type})</span>
+                </div>
                 <span className="font-code text-xl font-bold">{weapon2Score}</span>
               </div>
               <Progress value={(weapon2Score / maxScore) * 100} className={cn(winner === (data.weapon2Stats.name || 'Weapon 2') && '[&>div]:bg-accent')} />

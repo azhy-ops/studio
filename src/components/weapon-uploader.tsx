@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface WeaponUploaderProps {
   weaponNumber: 1 | 2;
@@ -33,9 +34,11 @@ interface WeaponUploaderProps {
   onStatChange: (statName: keyof WeaponStats, value: string) => void;
   isLoading?: boolean;
   children?: ReactNode;
+  weaponType?: string;
+  onWeaponTypeChange: (value: string) => void;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>)[] = [
   'damage',
   'fireRate',
   'range',
@@ -45,6 +48,8 @@ const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
   'stability',
   'muzzleVelocity',
 ];
+
+const weaponTypes = ["SMG", "Assault Rifle", "LMG", "Marksman Rifle", "Sniper", "Pistol"];
 
 const StatInput = ({ label, value, onChange, isMissing }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void, isMissing: boolean }) => {
     const displayLabel = label === 'handling' ? 'Handling & Mobility' : label.replace(/([A-Z])/g, ' $1');
@@ -100,7 +105,9 @@ const WeaponUploader = ({
   stats,
   onStatChange,
   isLoading = false,
-  children
+  children,
+  weaponType,
+  onWeaponTypeChange,
 }: WeaponUploaderProps) => {
   const inputId = `file-upload-${weaponNumber}`;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -169,18 +176,30 @@ const WeaponUploader = ({
             />
           </div>
 
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder={defaultName}
-              value={weaponName ?? ''}
-              onChange={onNameChange}
-              onFocus={handleFocus}
-              onBlur={onNameBlur}
-              className="pr-8"
-              disabled={!stats}
-            />
-            <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="relative">
+                <Input
+                type="text"
+                placeholder={defaultName}
+                value={weaponName ?? ''}
+                onChange={onNameChange}
+                onFocus={handleFocus}
+                onBlur={onNameBlur}
+                className="pr-8"
+                disabled={!stats}
+                />
+                <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </div>
+            <Select onValueChange={onWeaponTypeChange} value={weaponType} disabled={!stats}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {weaponTypes.map(type => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           {stats && !isLoading && (

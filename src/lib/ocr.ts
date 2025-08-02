@@ -5,6 +5,7 @@ import { createWorker, type Worker } from 'tesseract.js';
 
 export interface WeaponStats {
     name: string;
+    type?: string;
     damage: number;
     stability: number;
     range: number;
@@ -57,7 +58,7 @@ function calculateTTK(damage: number, fireRate: number): number {
 }
 
 
-async function extractStatsFromImage(dataUri: string): Promise<WeaponStats> {
+async function extractStatsFromImage(dataUri: string): Promise<Omit<WeaponStats, 'type'>> {
     const ocrWorker = await getWorker();
 
     const result = await ocrWorker.recognize(dataUri);
@@ -77,7 +78,7 @@ async function extractStatsFromImage(dataUri: string): Promise<WeaponStats> {
     const combinedHandling = handling > 0 ? handling : mobility;
 
 
-    const stats: WeaponStats = {
+    const stats: Omit<WeaponStats, 'type'> = {
         name: 'Unknown Weapon',
         damage,
         stability,

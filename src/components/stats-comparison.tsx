@@ -5,16 +5,13 @@ import type { WeaponStats } from '@/lib/ocr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatBarComparison } from './stat-bar';
 import { Badge } from './ui/badge';
+import type { ComparatorStats } from './weapon-comparator';
 
-interface ComparatorStats {
-    weapon1Stats: WeaponStats;
-    weapon2Stats: WeaponStats;
-}
 interface StatsComparisonProps {
   data: ComparatorStats;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>)[] = [
   'damage',
   'fireRate',
   'range',
@@ -38,9 +35,15 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 px-4 mb-4">
-             <h3 className="text-lg font-headline text-right">{weapon1Stats.name || 'Weapon 1'}</h3>
+             <div className="text-right">
+                <h3 className="text-lg font-headline">{weapon1Stats.name || 'Weapon 1'}</h3>
+                <p className="text-xs text-muted-foreground">{weapon1Stats.type}</p>
+             </div>
              <div></div>
-             <h3 className="text-lg font-headline text-left">{weapon2Stats.name || 'Weapon 2'}</h3>
+             <div className="text-left">
+                <h3 className="text-lg font-headline">{weapon2Stats.name || 'Weapon 2'}</h3>
+                <p className="text-xs text-muted-foreground">{weapon2Stats.type}</p>
+             </div>
           </div>
 
           <div className="space-y-5">

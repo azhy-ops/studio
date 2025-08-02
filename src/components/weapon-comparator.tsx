@@ -13,7 +13,7 @@ import CombatRangeComparison from '@/components/combat-range-comparison';
 import { ImageCropperDialog } from './image-cropper-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-interface ComparatorStats {
+export interface ComparatorStats {
     weapon1Stats: WeaponStats;
     weapon2Stats: WeaponStats;
 }
@@ -61,11 +61,12 @@ export default function WeaponComparator() {
     try {
         const { name, ...extractedStats } = await extractStatsFromImage(croppedDataUrl);
         const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
+        const defaultType = 'Assault Rifle';
         
         if (weaponNumber === 1) {
-            setWeapon1Stats({ name: defaultName, ...extractedStats });
+            setWeapon1Stats({ name: defaultName, type: defaultType, ...extractedStats });
         } else {
-            setWeapon2Stats({ name: defaultName, ...extractedStats });
+            setWeapon2Stats({ name: defaultName, type: defaultType, ...extractedStats });
         }
     } catch (err) {
         console.error(err);
@@ -82,6 +83,14 @@ export default function WeaponComparator() {
       toast({
         title: 'Missing Stats',
         description: 'Please upload screenshots and ensure stats are loaded for both weapons.',
+        variant: 'destructive',
+      });
+      return;
+    }
+     if (!weapon1Stats.type || !weapon2Stats.type) {
+      toast({
+        title: 'Missing Weapon Type',
+        description: 'Please select a weapon type for both weapons.',
         variant: 'destructive',
       });
       return;
@@ -115,7 +124,7 @@ export default function WeaponComparator() {
     const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
     const value = e.target.value;
     setStats(prev => {
-        if (!prev) return { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 };
+        if (!prev) return { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0, type: 'Assault Rifle' };
         return { ...prev, name: value };
     });
   };
@@ -124,8 +133,16 @@ export default function WeaponComparator() {
     const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
     const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
     if (e.target.value.trim() === '') {
-        setStats(prev => prev ? { ...prev, name: defaultName } : { name: defaultName, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0 });
+        setStats(prev => prev ? { ...prev, name: defaultName } : { name: defaultName, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0, type: 'Assault Rifle' });
     }
+  }
+
+  const handleWeaponTypeChange = (weaponNumber: 1 | 2, value: string) => {
+    const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
+    setStats(prev => {
+        if (!prev) return null;
+        return { ...prev, type: value };
+    });
   }
 
   return (
@@ -159,6 +176,8 @@ export default function WeaponComparator() {
           stats={weapon1Stats}
           onStatChange={(stat, value) => handleStatChange(1, stat, value)}
           isLoading={isProcessing === 1}
+          weaponType={weapon1Stats?.type}
+          onWeaponTypeChange={(value) => handleWeaponTypeChange(1, value)}
         />
         <WeaponUploader
           weaponNumber={2}
@@ -170,6 +189,8 @@ export default function WeaponComparator() {
           stats={weapon2Stats}
           onStatChange={(stat, value) => handleStatChange(2, stat, value)}
           isLoading={isProcessing === 2}
+          weaponType={weapon2Stats?.type}
+          onWeaponTypeChange={(value) => handleWeaponTypeChange(2, value)}
         />
       </div>
 
