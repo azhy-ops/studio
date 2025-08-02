@@ -17,9 +17,9 @@ const normalizeStat = (value: number, max: number) => (value / max) * 100;
 
 const formulas: Record<WeaponType, Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>, number>>> = {
     "SMG": {
-        "Close Range": { damage: 0.25, accuracy: 0.30, control: 0.30, stability: 0.20, handling: 0.50, fireRate: 0.50, muzzleVelocity: 0.10, range: 0.10 },
-        "Mid Range":   { damage: 0.40, accuracy: 0.30, control: 0.30, stability: 0.30, handling: 0.35, fireRate: 0.30, muzzleVelocity: 0.15, range: 0.30 },
-        "Long Range":  { damage: 0.40, accuracy: 0.20, control: 0.30, stability: 0.40, handling: 0.20, fireRate: 0.20, muzzleVelocity: 0.25, range: 0.30 }
+        "Close Range": { damage: 0.25, accuracy: 0.30, control: 0.25, stability: 0.20, handling: 0.50, fireRate: 0.50, muzzleVelocity: 0.10, range: 0.10 },
+        "Mid Range":   { damage: 0.30, accuracy: 0.30, control: 0.40, stability: 0.40, handling: 0.30, fireRate: 0.20, muzzleVelocity: 0.10, range: 0.30 },
+        "Long Range":  { damage: 0.40, accuracy: 0.30, control: 0.40, stability: 0.40, handling: 0.10, fireRate: 0.10, muzzleVelocity: 0.25, range: 0.30 }
     },
     "Assault Rifle": {
         "Close Range": { damage: 0.30, accuracy: 0.35, control: 0.30, stability: 0.30, handling: 0.40, fireRate: 0.40, muzzleVelocity: 0.15, range: 0.15 },
