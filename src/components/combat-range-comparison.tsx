@@ -21,7 +21,7 @@ const normalizeStat = (value: number, max: number) => (value / max) * 100;
 const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk' | 'range'>, number>> = {
     "Close Range": {
         damage: 0.15,
-        accuracy: 0.20,
+        accuracy: 0.10,
         control: 0.15,
         stability: 0.03,
         handling: 0.25,
@@ -30,16 +30,16 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
     },
     "Mid Range": {
         damage: 0.25,
-        accuracy: 0.10,
+        accuracy: 0.15,
         control: 0.30,
         stability: 0.30,
         handling: 0.15,
         fireRate: 0.15,
-        muzzleVelocity: 0.07,
+        muzzleVelocity: 0.05,
     },
     "Long Range": {
         damage: 0.30,
-        accuracy: 0.10,
+        accuracy: 0.30,
         control: 0.30,
         stability: 0.30,
         handling: 0.10,
@@ -50,7 +50,7 @@ const formulas: Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk
 
 const rangeFormulas: Record<CombatRange, (range: number) => number> = {
     "Close Range": (range) => range * 0.05,
-    "Mid Range": (range) => range * 0.20,
+    "Mid Range": (range) => range * 0.15,
     "Long Range": (range) => range * 0.30,
 };
 
