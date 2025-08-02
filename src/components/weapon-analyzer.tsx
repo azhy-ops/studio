@@ -11,6 +11,8 @@ import WeaponUploader from '@/components/weapon-uploader';
 import { Loader2 } from 'lucide-react';
 import { SimpleStatBar } from './stat-bar';
 import { ImageCropperDialog } from './image-cropper-dialog';
+import WeaponPerformanceChart from './weapon-performance-chart';
+import Disclaimer from './disclaimer';
 
 interface AnalysisOutput {
     stats: WeaponStats;
@@ -48,7 +50,7 @@ function AnalysisSkeleton() {
 function AnalysisResult({ data }: { data: AnalysisOutput }) {
   const { stats } = data;
 
-  const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk'>)[] = [
+  const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>)[] = [
     'damage',
     'fireRate',
     'range',
@@ -75,40 +77,46 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex justify-between items-end bg-muted/50 p-4 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-                <p className='text-sm text-muted-foreground text-left'>Time to Kill</p>
-                <p className='font-code text-4xl text-foreground'>
-                    {stats.ttk > 0 ? `${stats.ttk}ms` : 'N/A'}
-                </p>
-            </div>
-        </div>
+                 <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
+                    Base Stats
+                </h3>
+                <div className="flex justify-between items-end bg-muted/50 p-4 rounded-lg mb-4">
+                    <div>
+                        <p className='text-sm text-muted-foreground text-left'>Time to Kill</p>
+                        <p className='font-code text-4xl text-foreground'>
+                            {stats.ttk > 0 ? `${stats.ttk}ms` : 'N/A'}
+                        </p>
+                    </div>
+                </div>
 
-        <div>
-            <h3 className="font-headline text-xl mb-3 flex items-center gap-2">
-                Base Stats
-            </h3>
-             {notApplicableStats.length > 0 && (
-                <p className="text-xs text-muted-foreground mb-3">
-                    Note: The following stats were not detected: {notApplicableStats.map(s => s.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())).join(', ')}.
-                </p>
-            )}
-            <div className='space-y-3'>
-                {applicableStats.map((statKey, index) => {
-                    const value = stats[statKey];
-                    if(value === undefined) return null;
-                    return (
-                        <div key={statKey} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 50}ms`}}>
-                            <SimpleStatBar
-                                statName={statKey}
-                                value={value}
-                                label={statKey}
-                            />
-                        </div>
-                    )
-                })}
+                {notApplicableStats.length > 0 && (
+                    <p className="text-xs text-muted-foreground mb-3">
+                        Note: The following stats were not detected: {notApplicableStats.map(s => s.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())).join(', ')}.
+                    </p>
+                )}
+                <div className='space-y-3'>
+                    {applicableStats.map((statKey, index) => {
+                        const value = stats[statKey];
+                        if(value === undefined) return null;
+                        return (
+                            <div key={statKey} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 50}ms`}}>
+                                <SimpleStatBar
+                                    statName={statKey}
+                                    value={value}
+                                    label={statKey}
+                                />
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+            <div>
+                <WeaponPerformanceChart stats={stats} />
             </div>
         </div>
+        <Disclaimer />
       </CardContent>
     </Card>
   );
@@ -147,7 +155,7 @@ export default function WeaponAnalyzer() {
     try {
         const { name, ...stats } = await extractStatsFromImage(croppedDataUrl);
         const extractedName = name || 'Unknown Weapon';
-        setWeaponStats({ name: extractedName, ...stats });
+        setWeaponStats({ name: extractedName, type: 'Assault Rifle', ...stats });
     } catch (err) {
         console.error(err);
         toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter stats manually.', variant: 'destructive' });
@@ -180,6 +188,10 @@ export default function WeaponAnalyzer() {
         toast({ title: 'Missing Weapon Name', description: 'Please enter a name for the weapon.', variant: 'destructive' });
         return;
     }
+     if(!weaponStats.type) {
+        toast({ title: 'Missing Weapon Type', description: 'Please select a weapon type.', variant: 'destructive' });
+        return;
+    }
     performAnalysis(weaponStats);
   };
   
@@ -206,6 +218,16 @@ export default function WeaponAnalyzer() {
     }
   }
 
+  const handleWeaponTypeChange = (value: string) => {
+    if (weaponStats) {
+      const updatedStats = { ...weaponStats, type: value };
+      setWeaponStats(updatedStats);
+      if (analysisResult) {
+          performAnalysis(updatedStats);
+      }
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
         <ImageCropperDialog
@@ -226,6 +248,8 @@ export default function WeaponAnalyzer() {
                 stats={weaponStats}
                 onStatChange={handleStatChange}
                 isLoading={isProcessing}
+                weaponType={weaponStats?.type}
+                onWeaponTypeChange={handleWeaponTypeChange}
             />
         </div>
 

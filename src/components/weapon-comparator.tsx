@@ -12,6 +12,7 @@ import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
 import { ImageCropperDialog } from './image-cropper-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Disclaimer from './disclaimer';
 
 export interface ComparatorStats {
     weapon1Stats: WeaponStats;
@@ -211,6 +212,7 @@ export default function WeaponComparator() {
           <div className="space-y-8">
             <StatsComparison data={stats} />
             <CombatRangeComparison data={stats} />
+            <Disclaimer />
           </div>
         )}
       </div>
