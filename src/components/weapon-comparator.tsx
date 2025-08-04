@@ -19,6 +19,20 @@ export interface ComparatorStats {
     weapon2Stats: WeaponStats;
 }
 
+const initialWeaponStats = (name: string): WeaponStats => ({
+  name,
+  type: 'Assault Rifle',
+  damage: 0,
+  stability: 0,
+  range: 0,
+  accuracy: 0,
+  control: 0,
+  handling: 0,
+  fireRate: 0,
+  muzzleVelocity: 0,
+  ttk: 0,
+});
+
 export default function WeaponComparator() {
   const [imageToCrop, setImageToCrop] = useState<{ src: string | null; weapon: 1 | 2 }>({ src: null, weapon: 1 });
 
@@ -65,9 +79,9 @@ export default function WeaponComparator() {
         const defaultType = 'Assault Rifle';
         
         if (weaponNumber === 1) {
-            setWeapon1Stats({ name: defaultName, type: defaultType, ...extractedStats });
+            setWeapon1Stats({ name: name || defaultName, type: defaultType, ...extractedStats });
         } else {
-            setWeapon2Stats({ name: defaultName, type: defaultType, ...extractedStats });
+            setWeapon2Stats({ name: name || defaultName, type: defaultType, ...extractedStats });
         }
     } catch (err) {
         console.error(err);
@@ -124,26 +138,22 @@ export default function WeaponComparator() {
   const handleNameChange = (weaponNumber: 1 | 2, e: ChangeEvent<HTMLInputElement>) => {
     const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
     const value = e.target.value;
-    setStats(prev => {
-        if (!prev) return { name: value, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0, type: 'Assault Rifle' };
-        return { ...prev, name: value };
-    });
+    const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
+    setStats(prev => prev ? { ...prev, name: value } : initialWeaponStats(value || defaultName));
   };
 
   const handleNameBlur = (weaponNumber: 1 | 2, e: FocusEvent<HTMLInputElement>) => {
     const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
     const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
     if (e.target.value.trim() === '') {
-        setStats(prev => prev ? { ...prev, name: defaultName } : { name: defaultName, damage: 0, stability: 0, range: 0, accuracy: 0, control: 0, handling: 0, fireRate: 0, muzzleVelocity: 0, ttk: 0, type: 'Assault Rifle' });
+        setStats(prev => prev ? { ...prev, name: defaultName } : initialWeaponStats(defaultName));
     }
   }
 
   const handleWeaponTypeChange = (weaponNumber: 1 | 2, value: string) => {
     const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
-    setStats(prev => {
-        if (!prev) return null;
-        return { ...prev, type: value };
-    });
+    const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
+    setStats(prev => prev ? { ...prev, type: value } : { ...initialWeaponStats(defaultName), type: value });
   }
 
   return (

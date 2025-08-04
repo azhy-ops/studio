@@ -122,6 +122,20 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
   );
 }
 
+const initialWeaponStats = (): WeaponStats => ({
+  name: 'Unknown Weapon',
+  type: 'Assault Rifle',
+  damage: 0,
+  stability: 0,
+  range: 0,
+  accuracy: 0,
+  control: 0,
+  handling: 0,
+  fireRate: 0,
+  muzzleVelocity: 0,
+  ttk: 0,
+});
+
 export default function WeaponAnalyzer() {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [weaponPreview, setWeaponPreview] = useState<string | null>(null);
@@ -160,6 +174,7 @@ export default function WeaponAnalyzer() {
         console.error(err);
         toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter stats manually.', variant: 'destructive' });
         setWeaponPreview(null);
+        setWeaponStats(initialWeaponStats());
     } finally {
         setIsProcessing(false);
     }
@@ -196,36 +211,47 @@ export default function WeaponAnalyzer() {
   };
   
   const handleStatChange = (statName: keyof WeaponStats, value: string) => {
-    if (!weaponStats) return;
-    const numericValue = parseInt(value, 10);
-    if (isNaN(numericValue) && value !== '') return;
+    if (!weaponStats) {
+      setWeaponStats(initialWeaponStats());
+    };
 
-    const updatedStats = {...weaponStats, [statName]: isNaN(numericValue) ? 0 : numericValue};
-    
-    if (statName === 'damage' || statName === 'fireRate') {
-      updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
-    }
-    setWeaponStats(updatedStats);
+    setWeaponStats(prevStats => {
+        const stats = prevStats || initialWeaponStats();
+        const numericValue = parseInt(value, 10);
+        if (isNaN(numericValue) && value !== '') return stats;
 
-    if (analysisResult) {
-        performAnalysis(updatedStats);
-    }
+        const updatedStats = {...stats, [statName]: isNaN(numericValue) ? 0 : numericValue};
+        
+        if (statName === 'damage' || statName === 'fireRate') {
+          updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
+        }
+
+        if (analysisResult) {
+            performAnalysis(updatedStats);
+        }
+        return updatedStats;
+    });
   };
   
   const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (weaponStats) {
-      setWeaponStats({ ...weaponStats, name: e.target.value });
+    if (!weaponStats) {
+      setWeaponStats(initialWeaponStats());
     }
+    setWeaponStats(prev => prev ? { ...prev, name: e.target.value } : { ...initialWeaponStats(), name: e.target.value });
   }
 
   const handleWeaponTypeChange = (value: string) => {
-    if (weaponStats) {
-      const updatedStats = { ...weaponStats, type: value };
-      setWeaponStats(updatedStats);
-      if (analysisResult) {
+    if (!weaponStats) {
+      setWeaponStats(initialWeaponStats());
+    }
+     setWeaponStats(prevStats => {
+      const stats = prevStats || initialWeaponStats();
+      const updatedStats = { ...stats, type: value };
+       if (analysisResult) {
           performAnalysis(updatedStats);
       }
-    }
+      return updatedStats;
+    });
   };
 
   return (
