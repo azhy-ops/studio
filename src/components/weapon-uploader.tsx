@@ -4,12 +4,13 @@
 import Image from 'next/image';
 import type { ChangeEvent, ReactNode, FocusEvent } from 'react';
 import { useRef, useState } from 'react';
-import { UploadCloud, Pencil, X, AlertTriangle, AlertCircle } from 'lucide-react';
+import { UploadCloud, Pencil, X, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import type { WeaponStats } from '@/lib/ocr';
+import { defaultMaxRpm } from '@/lib/ocr';
 import { Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -21,6 +22,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { cn } from '@/lib/utils';
+
 
 interface WeaponUploaderProps {
   weaponNumber: 1 | 2;
@@ -32,15 +36,18 @@ interface WeaponUploaderProps {
   isSingleUploader?: boolean;
   stats: WeaponStats | null;
   onStatChange: (statName: keyof WeaponStats, value: string) => void;
+  onFireRateInputChange: (value: string) => void;
+  onFireRateTypeChange: (value: 'rpm' | 'stat') => void;
+  onMaxRpmChange: (value: string) => void;
   isLoading?: boolean;
   children?: ReactNode;
   weaponType?: string;
   onWeaponTypeChange: (value: string) => void;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed'>)[] = [
   'damage',
-  'fireRate',
+  // 'fireRate', // Handled by TTKCalculator
   'range',
   'accuracy',
   'control',
@@ -94,6 +101,89 @@ const StatInput = ({ label, value, onChange, isMissing }: { label: string; value
     </div>
 )};
 
+const TTKCalculator = ({ 
+    stats, 
+    onFireRateInputChange,
+    onFireRateTypeChange,
+    onMaxRpmChange,
+}: { 
+    stats: WeaponStats, 
+    onFireRateInputChange: (value: string) => void,
+    onFireRateTypeChange: (value: 'rpm' | 'stat') => void,
+    onMaxRpmChange: (value: string) => void
+}) => {
+    const defaultRpm = defaultMaxRpm[stats.type || 'Assault Rifle'];
+
+    return (
+        <div className='p-3 bg-muted/50 rounded-lg space-y-3 mt-2 text-sm'>
+            <div className='flex justify-between items-center'>
+                <Label className='font-bold flex items-center gap-1.5'>
+                    Time to Kill (TTK)
+                    <TooltipProvider>
+                        <Tooltip delayDuration={0}>
+                            <TooltipTrigger>
+                                <Info className="h-3 w-3 text-muted-foreground/70 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className='max-w-xs'>
+                                <p>TTK is how fast a weapon can neutralize a 100 HP target. The formula is (Shots to Kill - 1) * Time Between Shots.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </Label>
+                <div className='font-code text-lg font-bold'>{stats.ttk || 0}ms</div>
+            </div>
+            
+            <div className='grid grid-cols-2 gap-2 text-xs'>
+                <div className='flex justify-between border-t border-muted-foreground/20 pt-2'>
+                    <span className='text-muted-foreground'>Shots to Kill:</span>
+                    <span className='font-semibold'>{stats.shotsToKill || 0}</span>
+                </div>
+                <div className='flex justify-between border-t border-muted-foreground/20 pt-2'>
+                    <span className='text-muted-foreground'>RPM Used:</span>
+                     <span className='font-semibold'>{stats.rpmUsed || 0}</span>
+                </div>
+            </div>
+             {stats.fireRateInputType === 'stat' && (
+                <div className='text-center text-xs text-amber-500 flex items-center justify-center gap-1'>
+                   <AlertTriangle className='h-3 w-3' /> TTK is estimated from stat bar value.
+                </div>
+             )}
+
+
+            <div className='space-y-2 pt-2'>
+                <Label className='text-xs text-muted-foreground'>Fire Rate Input Type</Label>
+                <RadioGroup value={stats.fireRateInputType} onValueChange={onFireRateTypeChange} className="flex gap-2">
+                    <Label htmlFor={`fr-type-stat-${stats.name}`} className={cn("flex-1 text-center text-xs p-2 rounded-md border cursor-pointer", stats.fireRateInputType === 'stat' && 'bg-primary/20 border-primary')}>
+                         <RadioGroupItem value="stat" id={`fr-type-stat-${stats.name}`} className='sr-only'/>
+                         Stat Bar (0-100)
+                    </Label>
+                    <Label htmlFor={`fr-type-rpm-${stats.name}`} className={cn("flex-1 text-center text-xs p-2 rounded-md border cursor-pointer", stats.fireRateInputType === 'rpm' && 'bg-primary/20 border-primary')}>
+                        <RadioGroupItem value="rpm" id={`fr-type-rpm-${stats.name}`} className='sr-only'/>
+                        RPM (Actual)
+                    </Label>
+                </RadioGroup>
+            </div>
+            
+            <div className='grid grid-cols-2 gap-2'>
+                <StatInput 
+                    label={stats.fireRateInputType === 'rpm' ? 'RPM' : 'Fire Rate'}
+                    value={stats.fireRate}
+                    onChange={(e) => onFireRateInputChange(e.target.value)}
+                    isMissing={stats.fireRate === 0}
+                />
+                {stats.fireRateInputType === 'stat' && (
+                     <StatInput 
+                        label='Max RPM'
+                        value={stats.maxRpmOverride || defaultRpm}
+                        onChange={(e) => onMaxRpmChange(e.target.value)}
+                        isMissing={false}
+                    />
+                )}
+            </div>
+        </div>
+    )
+}
+
 const WeaponUploader = ({ 
   weaponNumber, 
   previewUrl, 
@@ -104,6 +194,9 @@ const WeaponUploader = ({
   isSingleUploader = false,
   stats,
   onStatChange,
+  onFireRateInputChange,
+  onFireRateTypeChange,
+  onMaxRpmChange,
   isLoading = false,
   children,
   weaponType,
@@ -203,6 +296,7 @@ const WeaponUploader = ({
           </div>
           
           {stats && !isLoading && (
+            <>
              <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
                   {statDisplayOrder.map(statKey => {
                     const value = stats[statKey]
@@ -217,7 +311,21 @@ const WeaponUploader = ({
                       />
                     )
                   })}
+                 <StatInput
+                    key="damage"
+                    label="damage"
+                    value={stats.damage}
+                    onChange={(e) => onStatChange('damage', e.target.value)}
+                    isMissing={stats.damage === 0}
+                  />
              </div>
+             <TTKCalculator 
+                stats={stats} 
+                onFireRateInputChange={onFireRateInputChange}
+                onFireRateTypeChange={onFireRateTypeChange}
+                onMaxRpmChange={onMaxRpmChange}
+             />
+            </>
           )}
 
           {isLoading && !stats && (

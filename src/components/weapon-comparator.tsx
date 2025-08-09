@@ -31,6 +31,7 @@ const initialWeaponStats = (name: string): WeaponStats => ({
   fireRate: 0,
   muzzleVelocity: 0,
   ttk: 0,
+  fireRateInputType: 'stat'
 });
 
 export default function WeaponComparator() {
@@ -65,29 +66,33 @@ export default function WeaponComparator() {
     setIsProcessing(weaponNumber);
     setImageToCrop({ src: null, weapon: 1 });
     
-    if (weaponNumber === 1) {
-      setWeapon1Stats(null);
-      setWeapon1Preview(croppedDataUrl);
-    } else {
-      setWeapon2Stats(null);
-      setWeapon2Preview(croppedDataUrl);
-    }
+    const setPreview = weaponNumber === 1 ? setWeapon1Preview : setWeapon2Preview;
+    const setStatsHandler = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
+
+    setPreview(croppedDataUrl);
 
     try {
         const { name, ...extractedStats } = await extractStatsFromImage(croppedDataUrl);
         const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
         const defaultType = 'Assault Rifle';
+
+        const fireRateInputType = extractedStats.fireRate > 200 ? 'rpm' : 'stat';
         
-        if (weaponNumber === 1) {
-            setWeapon1Stats({ name: name || defaultName, type: defaultType, ...extractedStats });
-        } else {
-            setWeapon2Stats({ name: name || defaultName, type: defaultType, ...extractedStats });
-        }
+        const fullStats: WeaponStats = { 
+            name: name || defaultName, 
+            type: defaultType, 
+            ...extractedStats,
+            fireRateInputType
+        };
+        
+        const ttkResult = extractStatsFromImage.calculateTTK(fullStats.damage, fullStats.fireRate, fullStats.fireRateInputType, fullStats.type);
+
+        setStatsHandler({ ...fullStats, ...ttkResult });
+
     } catch (err) {
         console.error(err);
         toast({ title: 'OCR Failed', description: `Could not read stats from the image for Weapon ${weaponNumber}. Please enter the stats manually.`, variant: 'destructive' });
-        if(weaponNumber === 1) setWeapon1Preview(null);
-        else setWeapon2Preview(null);
+        setPreview(null);
     } finally {
         setIsProcessing(false);
     }
@@ -119,42 +124,72 @@ export default function WeaponComparator() {
     setStats(statsToCompare);
   };
   
+  const updateStats = (weaponNumber: 1 | 2, updatedValues: Partial<WeaponStats>) => {
+    const setStatsHandler = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
+    
+    setStatsHandler(prevStats => {
+        const baseStats = prevStats || initialWeaponStats(weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2');
+        const newStats = { ...baseStats, ...updatedValues };
+
+        const ttkResult = extractStatsFromImage.calculateTTK(
+            newStats.damage,
+            newStats.fireRate,
+            newStats.fireRateInputType,
+            newStats.type,
+            newStats.maxRpmOverride
+        );
+
+        return { ...newStats, ...ttkResult };
+    });
+  };
+
   const handleStatChange = (weaponNumber: 1 | 2, statName: keyof WeaponStats, value: string) => {
     const numericValue = parseInt(value, 10);
     if (isNaN(numericValue) && value !== '') return;
+    updateStats(weaponNumber, { [statName]: isNaN(numericValue) ? 0 : numericValue });
+  };
+  
+  const handleFireRateInputChange = (weaponNumber: 1 | 2, value: string) => {
+    const numericValue = parseInt(value, 10);
+    const fireRateInputType = (weaponNumber === 1 ? weapon1Stats : weapon2Stats)?.fireRateInputType;
 
-    const statsToUpdate = weaponNumber === 1 ? weapon1Stats : weapon2Stats;
-    const setStatsToUpdate = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
+    if (isNaN(numericValue)) {
+         updateStats(weaponNumber, { fireRate: 0 });
+         return;
+    };
+    
+    if(fireRateInputType === 'stat' && (numericValue < 0 || numericValue > 100)) return;
 
-    if (statsToUpdate) {
-        const updatedStats = {...statsToUpdate, [statName]: isNaN(numericValue) ? 0 : numericValue};
-        if (statName === 'damage' || statName === 'fireRate') {
-            updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
-        }
-        setStatsToUpdate(updatedStats);
-    }
+    updateStats(weaponNumber, { fireRate: numericValue });
   };
 
+
   const handleNameChange = (weaponNumber: 1 | 2, e: ChangeEvent<HTMLInputElement>) => {
-    const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
     const value = e.target.value;
-    const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
-    setStats(prev => prev ? { ...prev, name: value } : initialWeaponStats(value || defaultName));
+    updateStats(weaponNumber, { name: value });
   };
 
   const handleNameBlur = (weaponNumber: 1 | 2, e: FocusEvent<HTMLInputElement>) => {
-    const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
-    const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
     if (e.target.value.trim() === '') {
-        setStats(prev => prev ? { ...prev, name: defaultName } : initialWeaponStats(defaultName));
+        const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
+        updateStats(weaponNumber, { name: defaultName });
     }
   }
 
   const handleWeaponTypeChange = (weaponNumber: 1 | 2, value: string) => {
-    const setStats = weaponNumber === 1 ? setWeapon1Stats : setWeapon2Stats;
-    const defaultName = weaponNumber === 1 ? 'Weapon 1' : 'Weapon 2';
-    setStats(prev => prev ? { ...prev, type: value } : { ...initialWeaponStats(defaultName), type: value });
+    updateStats(weaponNumber, { type: value });
   }
+
+  const handleFireRateTypeChange = (weaponNumber: 1 | 2, value: 'rpm' | 'stat') => {
+      updateStats(weaponNumber, { fireRateInputType: value });
+  };
+
+  const handleMaxRpmChange = (weaponNumber: 1 | 2, value: string) => {
+    const numericValue = parseInt(value, 10);
+    if (isNaN(numericValue) && value !== '') return;
+    updateStats(weaponNumber, { maxRpmOverride: isNaN(numericValue) ? undefined : numericValue });
+  };
+
 
   return (
     <div className="w-full max-w-6xl space-y-8">
@@ -189,6 +224,9 @@ export default function WeaponComparator() {
           isLoading={isProcessing === 1}
           weaponType={weapon1Stats?.type}
           onWeaponTypeChange={(value) => handleWeaponTypeChange(1, value)}
+          onFireRateInputChange={(value) => handleFireRateInputChange(1, value)}
+          onFireRateTypeChange={(value) => handleFireRateTypeChange(1, value)}
+          onMaxRpmChange={(value) => handleMaxRpmChange(1, value)}
         />
         <WeaponUploader
           weaponNumber={2}
@@ -202,6 +240,9 @@ export default function WeaponComparator() {
           isLoading={isProcessing === 2}
           weaponType={weapon2Stats?.type}
           onWeaponTypeChange={(value) => handleWeaponTypeChange(2, value)}
+          onFireRateInputChange={(value) => handleFireRateInputChange(2, value)}
+          onFireRateTypeChange={(value) => handleFireRateTypeChange(2, value)}
+          onMaxRpmChange={(value) => handleMaxRpmChange(2, value)}
         />
       </div>
 
