@@ -65,8 +65,9 @@ const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarPr
       </div>
        <span
         className={cn(
-          'font-code text-lg font-semibold transition-colors w-12 text-right',
-          isSuperior ? 'text-accent' : 'text-foreground'
+          'font-code text-lg font-bold transition-colors w-12 text-right',
+          isSuperior ? 'text-accent' : 'text-foreground',
+          'drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]'
         )}
       >
         {value}
@@ -104,7 +105,7 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
       <div className="flex items-center justify-end gap-2">
         <span
           className={cn(
-            'font-code text-lg font-semibold transition-colors',
+            'font-code text-lg font-bold transition-colors drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]',
             is1Superior ? 'text-accent' : 'text-foreground'
           )}
         >
@@ -167,7 +168,7 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
         </div>
         <span
           className={cn(
-            'font-code text-lg font-semibold transition-colors',
+            'font-code text-lg font-bold transition-colors drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]',
             is2Superior ? 'text-accent' : 'text-foreground'
           )}
         >
