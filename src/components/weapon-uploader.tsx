@@ -311,13 +311,6 @@ const WeaponUploader = ({
                       />
                     )
                   })}
-                 <StatInput
-                    key="damage"
-                    label="damage"
-                    value={stats.damage}
-                    onChange={(e) => onStatChange('damage', e.target.value)}
-                    isMissing={stats.damage === 0}
-                  />
              </div>
              <TTKCalculator 
                 stats={stats} 
