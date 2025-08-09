@@ -32,6 +32,17 @@ interface StatBarProps {
   isSuperior?: boolean;
 }
 
+const isHighValue = (statName: string, value: number) => {
+    const lowerCaseStatName = statName.toLowerCase();
+    if (lowerCaseStatName.includes('firerate') || lowerCaseStatName.includes('fire rate')) {
+        return value > 800;
+    }
+    if (lowerCaseStatName.includes('muzzlevelocity') || lowerCaseStatName.includes('muzzle velocity')) {
+        return value > 1000;
+    }
+    return value > 75;
+}
+
 const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarProps) => {
   const isScoreContribution = !statDescriptions[label];
   const maxStatValue = isScoreContribution ? 40 : (statName.toLowerCase() === 'firerate' || statName.toLowerCase() === 'muzzlevelocity' ? 1200 : 100);
@@ -66,7 +77,7 @@ const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarPr
        <span
         className={cn(
           'font-code text-lg font-bold transition-colors w-12 text-right',
-          isSuperior ? 'text-accent' : 'text-foreground',
+          isSuperior ? 'text-accent' : (isHighValue(statName, value) ? 'text-foreground' : 'text-muted-foreground'),
           'drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]'
         )}
       >
@@ -106,7 +117,7 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
         <span
           className={cn(
             'font-code text-lg font-bold transition-colors drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]',
-            is1Superior ? 'text-accent' : 'text-foreground'
+            is1Superior ? 'text-accent' : (isHighValue(statName, value1) ? 'text-foreground' : 'text-muted-foreground')
           )}
         >
           {value1}
@@ -169,7 +180,7 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
         <span
           className={cn(
             'font-code text-lg font-bold transition-colors drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]',
-            is2Superior ? 'text-accent' : 'text-foreground'
+            is2Superior ? 'text-accent' : (isHighValue(statName, value2) ? 'text-foreground' : 'text-muted-foreground')
           )}
         >
           {value2}
