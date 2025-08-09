@@ -126,7 +126,10 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
                   <h4 className="font-headline text-lg">{data.weapon1Stats.name || 'Weapon 1'}</h4>
                   <span className="text-xs text-muted-foreground">({data.weapon1Stats.type})</span>
                 </div>
-                <span className="font-code text-xl font-bold">{weapon1Score}</span>
+                <span className={cn(
+                  "font-code text-xl font-bold",
+                  winner === (data.weapon1Stats.name || 'Weapon 1') ? 'text-foreground' : 'text-muted-foreground'
+                )}>{weapon1Score}</span>
               </div>
               <Progress value={(weapon1Score / maxScore) * 100} className={cn(winner === (data.weapon1Stats.name || 'Weapon 1') && '[&>div]:bg-accent')} />
             </div>
@@ -137,7 +140,10 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
                   <h4 className="font-headline text-lg">{data.weapon2Stats.name || 'Weapon 2'}</h4>
                   <span className="text-xs text-muted-foreground">({data.weapon2Stats.type})</span>
                 </div>
-                <span className="font-code text-xl font-bold">{weapon2Score}</span>
+                <span className={cn(
+                  "font-code text-xl font-bold",
+                   winner === (data.weapon2Stats.name || 'Weapon 2') ? 'text-foreground' : 'text-muted-foreground'
+                )}>{weapon2Score}</span>
               </div>
               <Progress value={(weapon2Score / maxScore) * 100} className={cn(winner === (data.weapon2Stats.name || 'Weapon 2') && '[&>div]:bg-accent')} />
             </div>

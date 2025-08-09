@@ -15,7 +15,22 @@ export interface WeaponStats {
     fireRate: number;
     muzzleVelocity: number;
     ttk: number;
+    fireRateInputType: 'rpm' | 'stat';
+    maxRpmOverride?: number;
+    shotsToKill?: number;
+    timeBetweenShots?: number;
+    rpmUsed?: number;
 }
+
+export const defaultMaxRpm: Record<string, number> = {
+    "SMG": 1000,
+    "Assault Rifle": 800,
+    "LMG": 700,
+    "Marksman Rifle": 250,
+    "Sniper": 60,
+    "Pistol": 600
+};
+
 
 let worker: Worker | null = null;
 let workerLoading = false;
@@ -49,16 +64,44 @@ function parseStat(text: string, statName: string): number {
     return 0;
 }
 
-function calculateTTK(damage: number, fireRate: number): number {
-  if (damage <= 0 || fireRate <= 0) return 0;
-  const shotsToKill = Math.ceil(100 / damage);
-  const delayBetweenShots = 60 / fireRate; // in seconds
-  const ttk = (shotsToKill - 1) * delayBetweenShots;
-  return Math.round(ttk * 1000); // convert to milliseconds
+function calculateTTK(
+    damage: number,
+    fireRate: number,
+    fireRateInputType: 'rpm' | 'stat' = 'stat',
+    weaponType: string = 'Assault Rifle',
+    maxRpmOverride?: number
+) {
+    if (damage <= 0) return { ttk: 0, shotsToKill: 0, timeBetweenShots: 0, rpmUsed: 0 };
+
+    const maxRpm = maxRpmOverride || defaultMaxRpm[weaponType] || 800;
+
+    let rpmUsed: number;
+    if (fireRateInputType === 'rpm') {
+        rpmUsed = fireRate > 2000 ? 2000 : fireRate;
+    } else {
+        const clampedFireRate = Math.max(0, Math.min(100, fireRate));
+        rpmUsed = (clampedFireRate / 100) * maxRpm;
+    }
+
+    if (rpmUsed < 1) rpmUsed = 1;
+
+
+    const shotsToKill = Math.ceil(100 / damage);
+    if (shotsToKill <= 1) return { ttk: 0, shotsToKill: 1, timeBetweenShots: 0, rpmUsed };
+
+    const timeBetweenShots = 60 / rpmUsed;
+    const ttk = (shotsToKill - 1) * timeBetweenShots;
+
+    return {
+        ttk: Math.round(ttk * 1000), // convert to milliseconds
+        shotsToKill,
+        timeBetweenShots: Number(timeBetweenShots.toFixed(3)),
+        rpmUsed: Number(rpmUsed.toFixed(2)),
+    };
 }
 
 
-async function extractStatsFromImage(dataUri: string): Promise<Omit<WeaponStats, 'type'>> {
+async function extractStatsFromImage(dataUri: string): Promise<Omit<WeaponStats, 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed'>> {
     const ocrWorker = await getWorker();
 
     const result = await ocrWorker.recognize(dataUri);
@@ -73,12 +116,10 @@ async function extractStatsFromImage(dataUri: string): Promise<Omit<WeaponStats,
     const fireRate = parseStat(text, 'Fire Rate');
     const muzzleVelocity = parseStat(text, 'Muzzle Velocity');
 
-    // Combine Mobility into Handling
     const mobility = parseStat(text, 'Mobility');
     const combinedHandling = handling > 0 ? handling : mobility;
 
-
-    const stats: Omit<WeaponStats, 'type'> = {
+    const stats = {
         name: 'Unknown Weapon',
         damage,
         stability,
@@ -88,10 +129,11 @@ async function extractStatsFromImage(dataUri: string): Promise<Omit<WeaponStats,
         handling: combinedHandling,
         fireRate,
         muzzleVelocity,
-        ttk: 0
+        ttk: 0,
     };
     
-    stats.ttk = calculateTTK(stats.damage, stats.fireRate);
+    const ttkResults = calculateTTK(stats.damage, stats.fireRate);
+    stats.ttk = ttkResults.ttk;
 
     return stats;
 }

@@ -9,6 +9,9 @@ import Footer from '@/components/footer';
 export const metadata: Metadata = {
   title: 'weapon compare | Analyze & Compare In-Game Weapon Stats',
   description: 'Upload screenshots of your favorite FPS weapons to automatically extract and compare stats like damage, fire rate, accuracy, and more. Make data-driven decisions for your perfect loadout.',
+  verification: {
+    google: 'a82m3ayYYCfO8VyX1n_4HJn6CvAuKLiyCfkG3OKH__g',
+  },
 };
 
 export default function RootLayout({

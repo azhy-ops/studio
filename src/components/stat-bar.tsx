@@ -32,6 +32,17 @@ interface StatBarProps {
   isSuperior?: boolean;
 }
 
+const isHighValue = (statName: string, value: number) => {
+    const lowerCaseStatName = statName.toLowerCase();
+    if (lowerCaseStatName.includes('firerate') || lowerCaseStatName.includes('fire rate')) {
+        return value > 800;
+    }
+    if (lowerCaseStatName.includes('muzzlevelocity') || lowerCaseStatName.includes('muzzle velocity')) {
+        return value > 1000;
+    }
+    return value > 75;
+}
+
 const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarProps) => {
   const isScoreContribution = !statDescriptions[label];
   const maxStatValue = isScoreContribution ? 40 : (statName.toLowerCase() === 'firerate' || statName.toLowerCase() === 'muzzlevelocity' ? 1200 : 100);
@@ -65,8 +76,9 @@ const SimpleStatBar = ({ statName, value, label, isSuperior = false }: StatBarPr
       </div>
        <span
         className={cn(
-          'font-code text-lg font-semibold transition-colors w-12 text-right',
-          isSuperior ? 'text-accent' : 'text-foreground'
+          'font-code text-lg font-bold transition-colors w-12 text-right',
+          isSuperior ? 'text-accent' : (isHighValue(statName, value) ? 'text-foreground' : 'text-muted-foreground'),
+          'drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]'
         )}
       >
         {value}
@@ -93,10 +105,24 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
   const normalizedStatName = statName === 'Handling & Mobility' ? 'handling' : statName.toLowerCase().replace(/\s/g, '');
 
   const percentageDiff = value1 !== value2 ? Math.round(
-    ((value1 - value2) / Math.max(value1, value2, 1)) * 100
+    ((value1 - value2) / Math.max(value2, 1)) * 100
   ) : 0;
   
   const displayStatName = statName;
+
+  const getDiffColor = (diff: number) => {
+    if (Math.abs(diff) < 1) return 'text-chart-3';
+    if (diff > 0) {
+      if (diff >= 25) return 'text-chart-1'; // higher-strong
+      if (diff >= 10) return 'text-green-400'; // higher-medium
+      return 'text-green-500'; // higher-low
+    } else {
+      if (diff <= -25) return 'text-chart-2'; // lower-strong
+      if (diff <= -10) return 'text-red-400'; // lower-medium
+      return 'text-red-500'; // lower-low
+    }
+  }
+
 
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
@@ -104,13 +130,13 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
       <div className="flex items-center justify-end gap-2">
         <span
           className={cn(
-            'font-code text-lg font-semibold transition-colors',
-            is1Superior ? 'text-accent' : 'text-foreground'
+            'font-code text-xl font-bold transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]',
+            is1Superior ? 'text-accent-foreground' : 'text-muted-foreground'
           )}
         >
           {value1}
         </span>
-        <div className="w-full overflow-hidden rounded-full bg-muted h-3">
+        <div className="w-full overflow-hidden rounded-full bg-secondary h-3">
           <div
             className={cn('h-3 rounded-full transition-all duration-500', is1Superior ? 'bg-accent' : 'bg-primary/50')}
             style={{ width: `${bar1Width}%` }}
@@ -124,11 +150,11 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
           {percentageDiff !== 0 && (
             <div
               className={cn(
-                'flex items-center text-xs font-bold',
-                percentageDiff > 0 ? 'text-green-400' : 'text-red-400'
+                'flex items-center text-sm font-bold',
+                getDiffColor(percentageDiff)
               )}
             >
-              {percentageDiff > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+              {percentageDiff > 0 ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />}
               <span>{Math.abs(percentageDiff)}%</span>
             </div>
           )}
@@ -159,7 +185,7 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
 
       {/* Weapon 2 Stat */}
       <div className="flex items-center gap-2">
-        <div className="w-full overflow-hidden rounded-full bg-muted h-3">
+        <div className="w-full overflow-hidden rounded-full bg-secondary h-3">
           <div
             className={cn('h-3 rounded-full transition-all duration-500', is2Superior ? 'bg-accent' : 'bg-primary/50')}
             style={{ width: `${bar2Width}%` }}
@@ -167,8 +193,8 @@ const StatBarComparison = ({ statName, value1, value2, unit }: StatBarComparison
         </div>
         <span
           className={cn(
-            'font-code text-lg font-semibold transition-colors',
-            is2Superior ? 'text-accent' : 'text-foreground'
+            'font-code text-xl font-bold transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]',
+             is2Superior ? 'text-accent-foreground' : 'text-muted-foreground'
           )}
         >
           {value2}
