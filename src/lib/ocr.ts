@@ -79,7 +79,7 @@ function calculateTTK(
     if (fireRateInputType === 'rpm') {
         rpmUsed = fireRate > 2000 ? 2000 : fireRate;
     } else {
-        const clampedFireRate = Math.max(0, Math.min(100, fireRate));
+        const clampedFireRate = Math.max(0, fireRate);
         rpmUsed = (clampedFireRate / 100) * maxRpm;
     }
 

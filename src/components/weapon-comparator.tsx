@@ -158,7 +158,7 @@ export default function WeaponComparator() {
          return;
     };
     
-    if(fireRateInputType === 'stat' && (numericValue < 0 || numericValue > 100)) return;
+    if(fireRateInputType === 'stat' && numericValue < 0) return;
 
     updateStats(weaponNumber, { fireRate: numericValue });
   };
