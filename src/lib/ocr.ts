@@ -120,7 +120,7 @@ async function extractStatsFromImage(dataUri: string): Promise<Omit<WeaponStats,
     const combinedHandling = handling > 0 ? handling : mobility;
 
     const stats = {
-        name: 'Unknown Weapon',
+        name: '',
         damage,
         stability,
         range,

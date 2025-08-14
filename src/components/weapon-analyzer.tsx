@@ -123,7 +123,7 @@ function AnalysisResult({ data }: { data: AnalysisOutput }) {
 }
 
 const initialWeaponStats = (): WeaponStats => ({
-  name: 'Unknown Weapon',
+  name: 'Weapon 1',
   type: 'Assault Rifle',
   damage: 0,
   stability: 0,
@@ -134,6 +134,7 @@ const initialWeaponStats = (): WeaponStats => ({
   fireRate: 0,
   muzzleVelocity: 0,
   ttk: 0,
+  fireRateInputType: 'stat'
 });
 
 export default function WeaponAnalyzer() {
@@ -168,8 +169,8 @@ export default function WeaponAnalyzer() {
 
     try {
         const { name, ...stats } = await extractStatsFromImage(croppedDataUrl);
-        const extractedName = name || 'Unknown Weapon';
-        setWeaponStats({ name: extractedName, type: 'Assault Rifle', ...stats });
+        const extractedName = name || 'Weapon 1';
+        setWeaponStats({ name: extractedName, type: 'Assault Rifle', ...stats, fireRateInputType: 'stat' });
     } catch (err) {
         console.error(err);
         toast({ title: 'OCR Failed', description: 'Could not read stats from the image. Please enter stats manually.', variant: 'destructive' });
@@ -199,7 +200,7 @@ export default function WeaponAnalyzer() {
       toast({ title: 'Missing Stats', description: 'Please upload a screenshot or enter stats manually.', variant: 'destructive' });
       return;
     }
-    if(!weaponStats.name || weaponStats.name === "Unknown Weapon") {
+    if(!weaponStats.name || weaponStats.name === "Weapon 1") {
         toast({ title: 'Missing Weapon Name', description: 'Please enter a name for the weapon.', variant: 'destructive' });
         return;
     }
@@ -223,7 +224,8 @@ export default function WeaponAnalyzer() {
         const updatedStats = {...stats, [statName]: isNaN(numericValue) ? 0 : numericValue};
         
         if (statName === 'damage' || statName === 'fireRate') {
-          updatedStats.ttk = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate);
+          const ttkResult = extractStatsFromImage.calculateTTK(updatedStats.damage, updatedStats.fireRate, updatedStats.fireRateInputType, updatedStats.type, updatedStats.maxRpmOverride);
+          updatedStats.ttk = ttkResult.ttk;
         }
 
         if (analysisResult) {
@@ -253,6 +255,44 @@ export default function WeaponAnalyzer() {
       return updatedStats;
     });
   };
+  
+  const handleFireRateInputChange = (value: string) => {
+    const numericValue = parseInt(value, 10);
+    const fireRateInputType = weaponStats?.fireRateInputType;
+
+    if (isNaN(numericValue)) {
+         handleStatChange('fireRate', '0');
+         return;
+    };
+    
+    if(fireRateInputType === 'stat' && numericValue < 0) return;
+
+    handleStatChange('fireRate', value);
+  };
+  
+  const handleFireRateTypeChange = (value: 'rpm' | 'stat') => {
+      setWeaponStats(prevStats => {
+        const stats = prevStats || initialWeaponStats();
+        const updatedStats = { ...stats, fireRateInputType: value };
+        if (analysisResult) {
+            performAnalysis(updatedStats);
+        }
+        return updatedStats;
+      });
+  };
+
+  const handleMaxRpmChange = (value: string) => {
+    const numericValue = parseInt(value, 10);
+    if (isNaN(numericValue) && value !== '') return;
+    setWeaponStats(prevStats => {
+      const stats = prevStats || initialWeaponStats();
+      const updatedStats = { ...stats, maxRpmOverride: isNaN(numericValue) ? undefined : numericValue };
+      if (analysisResult) {
+          performAnalysis(updatedStats);
+      }
+      return updatedStats;
+    });
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
@@ -276,6 +316,9 @@ export default function WeaponAnalyzer() {
                 isLoading={isProcessing}
                 weaponType={weaponStats?.type}
                 onWeaponTypeChange={handleWeaponTypeChange}
+                onFireRateInputChange={handleFireRateInputChange}
+                onFireRateTypeChange={handleFireRateTypeChange}
+                onMaxRpmChange={handleMaxRpmChange}
             />
         </div>
 
