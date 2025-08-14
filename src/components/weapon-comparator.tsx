@@ -205,7 +205,7 @@ export default function WeaponComparator() {
           <AlertDescription>
             <ul className="list-disc list-inside space-y-1 mt-2 text-xs">
               <li>Use the crop box to highlight only the weapon’s stats — this helps the system read the numbers more accurately.</li>
-              <li>Some games might use different stat names (like "Handling" or "Mobility"), or leave some out completely. Missing stats won’t affect the calculation.</li>
+              <li>Some games might use different stat names (like "Handling" or "Mobility"), or leave some out completely. <span className="underline decoration-yellow-500">Missing stats won’t affect the calculation.</span></li>
               <li>After cropping, please double-check the extracted numbers and fix any incorrect values before analysis.</li>
             </ul>
           </AlertDescription>
