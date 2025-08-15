@@ -22,30 +22,23 @@ export default async function getCroppedImg(
     throw new Error('Could not get canvas context');
   }
 
-  const safeArea = Math.max(image.width, image.height) * 4;
-
-  canvas.width = safeArea;
-  canvas.height = safeArea;
-  
-  ctx.translate(safeArea / 2, safeArea / 2);
-  ctx.translate(-image.width / 2, -image.height / 2);
-
-  ctx.drawImage(
-    image,
-    0,
-    0
-  );
-
-  const data = ctx.getImageData(0, 0, safeArea, safeArea);
-  
+  // Set the canvas size to the size of the crop area.
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
 
-  ctx.putImageData(
-    data,
-    Math.round(0 - safeArea / 2 + image.width / 2 - pixelCrop.x),
-    Math.round(0 - safeArea / 2 + image.height / 2 - pixelCrop.y)
+  // Draw the cropped portion of the original image onto the canvas.
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
   );
 
+  // Return the cropped image as a data URL.
   return canvas.toDataURL('image/png');
 }
