@@ -6,7 +6,7 @@ import { Dices, AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { extractStatsFromImage, type WeaponStats } from '@/lib/ocr';
+import { extractStatsFromImage, type WeaponStats, type CalibrationStats, calculateFinalStats, calculateFinalScore } from '@/lib/ocr';
 import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
@@ -34,6 +34,16 @@ const initialWeaponStats = (name: string): WeaponStats => ({
   fireRateInputType: 'stat'
 });
 
+const initialCalibrationStats = (): CalibrationStats => ({
+    firingStability: 0,
+    extraControl: 0,
+    stabilityWhenMoving: 0,
+    adsMovementSpeed: 0,
+    ads: 0,
+    hipFireAimSpeed: 0,
+});
+
+
 export default function WeaponComparator() {
   const [imageToCrop, setImageToCrop] = useState<{ src: string | null; weapon: 1 | 2 }>({ src: null, weapon: 1 });
 
@@ -43,9 +53,27 @@ export default function WeaponComparator() {
   const [weapon1Stats, setWeapon1Stats] = useState<WeaponStats | null>(null);
   const [weapon2Stats, setWeapon2Stats] = useState<WeaponStats | null>(null);
   
+  const [weapon1Calibration, setWeapon1Calibration] = useState<CalibrationStats>(initialCalibrationStats());
+  const [weapon2Calibration, setWeapon2Calibration] = useState<CalibrationStats>(initialCalibrationStats());
+
   const [stats, setStats] = useState<ComparatorStats | null>(null);
   const [isProcessing, setIsProcessing] = useState<false | 1 | 2>(false);
   const { toast } = useToast();
+
+  const finalWeapon1Stats = useMemo(() => {
+    if (!weapon1Stats) return null;
+    const finalStats = calculateFinalStats(weapon1Stats, weapon1Calibration);
+    const finalScore = calculateFinalScore(finalStats);
+    return { ...finalStats, finalScore };
+  }, [weapon1Stats, weapon1Calibration]);
+
+  const finalWeapon2Stats = useMemo(() => {
+    if (!weapon2Stats) return null;
+    const finalStats = calculateFinalStats(weapon2Stats, weapon2Calibration);
+    const finalScore = calculateFinalScore(finalStats);
+    return { ...finalStats, finalScore };
+  }, [weapon2Stats, weapon2Calibration]);
+
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, weaponNumber: 1 | 2) => {
     const file = e.target.files?.[0];
@@ -99,7 +127,7 @@ export default function WeaponComparator() {
   };
 
   const handleCompare = async () => {
-    if (!weapon1Stats || !weapon2Stats) {
+    if (!finalWeapon1Stats || !finalWeapon2Stats) {
       toast({
         title: 'Missing Stats',
         description: 'Please upload screenshots and ensure stats are loaded for both weapons.',
@@ -107,7 +135,7 @@ export default function WeaponComparator() {
       });
       return;
     }
-     if (!weapon1Stats.type || !weapon2Stats.type) {
+     if (!finalWeapon1Stats.type || !finalWeapon2Stats.type) {
       toast({
         title: 'Missing Weapon Type',
         description: 'Please select a weapon type for both weapons.',
@@ -117,8 +145,8 @@ export default function WeaponComparator() {
     }
 
     const statsToCompare: ComparatorStats = {
-      weapon1Stats: { ...weapon1Stats, name: weapon1Stats.name || 'Weapon 1' },
-      weapon2Stats: { ...weapon2Stats, name: weapon2Stats.name || 'Weapon 2' }
+      weapon1Stats: { ...finalWeapon1Stats, name: finalWeapon1Stats.name || 'Weapon 1' },
+      weapon2Stats: { ...finalWeapon2Stats, name: finalWeapon2Stats.name || 'Weapon 2' }
     };
 
     setStats(statsToCompare);
@@ -151,15 +179,12 @@ export default function WeaponComparator() {
   
   const handleFireRateInputChange = (weaponNumber: 1 | 2, value: string) => {
     const numericValue = parseInt(value, 10);
-    const fireRateInputType = (weaponNumber === 1 ? weapon1Stats : weapon2Stats)?.fireRateInputType;
-
+    
     if (isNaN(numericValue)) {
          updateStats(weaponNumber, { fireRate: 0 });
          return;
     };
     
-    if(fireRateInputType === 'stat' && numericValue < 0) return;
-
     updateStats(weaponNumber, { fireRate: numericValue });
   };
 
@@ -190,6 +215,14 @@ export default function WeaponComparator() {
     updateStats(weaponNumber, { maxRpmOverride: isNaN(numericValue) ? undefined : numericValue });
   };
 
+  const handleCalibrationChange = (weaponNumber: 1 | 2, statName: keyof CalibrationStats, value: string) => {
+    const numericValue = parseInt(value, 10);
+    const setCalibrationHandler = weaponNumber === 1 ? setWeapon1Calibration : setWeapon2Calibration;
+    setCalibrationHandler(prev => ({
+      ...prev,
+      [statName]: isNaN(numericValue) ? 0 : numericValue,
+    }));
+  };
 
   return (
     <div className="w-full max-w-6xl space-y-8">
@@ -227,6 +260,9 @@ export default function WeaponComparator() {
           onFireRateInputChange={(value) => handleFireRateInputChange(1, value)}
           onFireRateTypeChange={(value) => handleFireRateTypeChange(1, value)}
           onMaxRpmChange={(value) => handleMaxRpmChange(1, value)}
+          calibrationStats={weapon1Calibration}
+          onCalibrationChange={(stat, value) => handleCalibrationChange(1, stat, value)}
+          finalStats={finalWeapon1Stats}
         />
         <WeaponUploader
           weaponNumber={2}
@@ -243,6 +279,9 @@ export default function WeaponComparator() {
           onFireRateInputChange={(value) => handleFireRateInputChange(2, value)}
           onFireRateTypeChange={(value) => handleFireRateTypeChange(2, value)}
           onMaxRpmChange={(value) => handleMaxRpmChange(2, value)}
+          calibrationStats={weapon2Calibration}
+          onCalibrationChange={(stat, value) => handleCalibrationChange(2, stat, value)}
+          finalStats={finalWeapon2Stats}
         />
       </div>
 
@@ -270,3 +309,5 @@ export default function WeaponComparator() {
     </div>
   );
 }
+
+    

@@ -20,6 +20,16 @@ export interface WeaponStats {
     shotsToKill?: number;
     timeBetweenShots?: number;
     rpmUsed?: number;
+    finalScore?: number;
+}
+
+export interface CalibrationStats {
+    firingStability: number;
+    extraControl: number;
+    stabilityWhenMoving: number;
+    adsMovementSpeed: number;
+    ads: number;
+    hipFireAimSpeed: number;
 }
 
 export const defaultMaxRpm: Record<string, number> = {
@@ -52,7 +62,7 @@ async function getWorker() {
     const newWorker = await createWorker('eng');
     worker = newWorker;
     workerLoading = false;
-    return worker;
+    return newWorker;
 }
 
 function parseStat(text: string, statName: string): number {
@@ -150,3 +160,40 @@ export async function terminateWorker() {
         worker = null;
     }
 }
+
+export function calculateFinalStats(baseStats: WeaponStats, calibration: CalibrationStats): WeaponStats {
+    const finalControl = baseStats.control * (1 + (calibration.firingStability + calibration.extraControl) / 100);
+    const finalAccuracy = baseStats.accuracy * (1 + calibration.hipFireAimSpeed / 100);
+    const finalHandling = baseStats.handling * (1 + (calibration.ads + calibration.adsMovementSpeed) / 100);
+    const finalStability = baseStats.stability * (1 + calibration.stabilityWhenMoving / 100);
+
+    return {
+        ...baseStats,
+        control: finalControl,
+        accuracy: finalAccuracy,
+        handling: finalHandling,
+        stability: finalStability,
+    };
+}
+
+export function calculateFinalScore(stats: WeaponStats): number {
+    const { damage, accuracy, control, handling, stability, fireRate, range, muzzleVelocity } = stats;
+    
+    // Normalize high-value stats
+    const normFireRate = (fireRate / 1200) * 100;
+    const normMuzzleVelocity = (muzzleVelocity / 1500) * 100;
+
+    const score = 
+        (damage * 0.25) +
+        (accuracy * 0.15) +
+        (control * 0.20) +
+        (handling * 0.10) +
+        (stability * 0.10) +
+        (normFireRate * 0.10) +
+        (range * 0.05) +
+        (normMuzzleVelocity * 0.05);
+
+    return score;
+}
+
+    

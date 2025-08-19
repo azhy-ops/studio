@@ -12,7 +12,7 @@ interface StatsComparisonProps {
   data: ComparatorStats;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
   'damage',
   'fireRate',
   'range',
@@ -54,6 +54,11 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
   } else if (weapon2Stats.ttk > 0) {
       ttkWinner = weapon2Stats.name;
   }
+  
+  const score1 = weapon1Stats.finalScore || 0;
+  const score2 = weapon2Stats.finalScore || 0;
+  const scoreWinner = score1 > score2 ? weapon1Stats.name : (score2 > score1 ? weapon2Stats.name : null);
+
 
   return (
     <div className="animate-in fade-in-0 duration-500">
@@ -67,11 +72,17 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
              <div className="text-right">
                 <h3 className="text-lg font-headline">{weapon1Stats.name || 'Weapon 1'}</h3>
                 <p className="text-xs text-muted-foreground">{weapon1Stats.type}</p>
+                <p className="text-xs text-muted-foreground">Score: <span className="font-bold text-accent">{score1.toFixed(2)}</span></p>
+
              </div>
-             <div></div>
+             <div className="text-center">
+                <h4 className="font-headline text-lg">Final Score</h4>
+                {scoreWinner && <p className="text-xs text-accent">🏆 {scoreWinner}</p>}
+             </div>
              <div className="text-left">
                 <h3 className="text-lg font-headline">{weapon2Stats.name || 'Weapon 2'}</h3>
                 <p className="text-xs text-muted-foreground">{weapon2Stats.type}</p>
+                <p className="text-xs text-muted-foreground">Score: <span className="font-bold text-accent">{score2.toFixed(2)}</span></p>
              </div>
           </div>
 
@@ -129,3 +140,5 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
 };
 
 export default StatsComparison;
+
+    

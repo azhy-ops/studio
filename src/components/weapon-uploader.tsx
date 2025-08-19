@@ -4,12 +4,12 @@
 import Image from 'next/image';
 import type { ChangeEvent, ReactNode, FocusEvent } from 'react';
 import { useRef, useState } from 'react';
-import { UploadCloud, Pencil, X, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { UploadCloud, Pencil, X, AlertTriangle, AlertCircle, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
-import type { WeaponStats } from '@/lib/ocr';
+import type { WeaponStats, CalibrationStats } from '@/lib/ocr';
 import { defaultMaxRpm } from '@/lib/ocr';
 import { Loader2 } from 'lucide-react';
 import {
@@ -24,6 +24,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import CalibrationPanel from './calibration-panel';
 
 
 interface WeaponUploaderProps {
@@ -43,11 +45,13 @@ interface WeaponUploaderProps {
   children?: ReactNode;
   weaponType?: string;
   onWeaponTypeChange: (value: string) => void;
+  calibrationStats: CalibrationStats;
+  onCalibrationChange: (statName: keyof CalibrationStats, value: string) => void;
+  finalStats: (WeaponStats & { finalScore?: number }) | null;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
   'damage',
-  // 'fireRate', // Handled by TTKCalculator
   'range',
   'accuracy',
   'control',
@@ -58,9 +62,11 @@ const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fire
 
 const weaponTypes = ["SMG", "Assault Rifle", "LMG", "Marksman Rifle", "Sniper", "Pistol"];
 
-const StatInput = ({ label, value, onChange, isMissing }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void, isMissing: boolean }) => {
+const StatInput = ({ label, value, onChange, isMissing, finalValue }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void, isMissing: boolean, finalValue?: number }) => {
     const displayLabel = label === 'handling' ? 'Handling & Mobility' : label.replace(/([A-Z])/g, ' $1');
     const isSuspicious = value > 0 && value < 10;
+    const isChanged = finalValue !== undefined && finalValue.toFixed(1) !== value.toFixed(1);
+
     return (
     <div className='grid grid-cols-2 items-center gap-2'>
         <Label htmlFor={label.toLowerCase()} className='text-right text-muted-foreground capitalize text-xs flex items-center justify-end gap-1'>
@@ -90,14 +96,31 @@ const StatInput = ({ label, value, onChange, isMissing }: { label: string; value
             )}
             {displayLabel}
         </Label>
-        <Input
-            id={label.toLowerCase()}
-            type="number"
-            value={value || ''}
-            onChange={onChange}
-            className='h-8 text-sm'
-            placeholder="0"
-        />
+        <div className="flex items-center gap-2">
+          <Input
+              id={label.toLowerCase()}
+              type="number"
+              value={value || ''}
+              onChange={onChange}
+              className='h-8 text-sm'
+              placeholder="0"
+          />
+           {isChanged && (
+            <TooltipProvider>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger>
+                  <span className="font-bold text-accent text-sm">
+                    {finalValue?.toFixed(1)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Final stat after calibration</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+
     </div>
 )};
 
@@ -201,10 +224,15 @@ const WeaponUploader = ({
   children,
   weaponType,
   onWeaponTypeChange,
+  calibrationStats,
+  onCalibrationChange,
+  finalStats
 }: WeaponUploaderProps) => {
   const inputId = `file-upload-${weaponNumber}`;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isCalibrateOpen, setIsCalibrateOpen] = useState(false);
+
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
     event.target.select();
@@ -296,8 +324,8 @@ const WeaponUploader = ({
           </div>
           
           {stats && !isLoading && (
-            <>
-             <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
+            <Collapsible open={isCalibrateOpen} onOpenChange={setIsCalibrateOpen}>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
                   {statDisplayOrder.map(statKey => {
                     const value = stats[statKey]
                     if (value === undefined) return null;
@@ -308,17 +336,36 @@ const WeaponUploader = ({
                           value={value}
                           onChange={(e) => onStatChange(statKey, e.target.value)}
                           isMissing={value === 0}
+                          finalValue={finalStats?.[statKey]}
                       />
                     )
                   })}
-             </div>
-             <TTKCalculator 
+              </div>
+              
+              <TTKCalculator 
                 stats={stats} 
                 onFireRateInputChange={onFireRateInputChange}
                 onFireRateTypeChange={onFireRateTypeChange}
                 onMaxRpmChange={onMaxRpmChange}
-             />
-            </>
+              />
+
+              <div className="mt-2 text-center">
+                 <div className='font-bold text-lg'>Final Score: <span className='text-accent'>{finalStats?.finalScore?.toFixed(2) || 'N/A'}</span></div>
+              </div>
+
+              <CollapsibleTrigger asChild>
+                <Button variant="link" className="text-xs text-muted-foreground w-full mt-2">
+                  {isCalibrateOpen ? <ChevronUp/> : <ChevronDown/>}
+                  {isCalibrateOpen ? 'Hide' : 'Show'} Calibration Effects
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CalibrationPanel
+                    stats={calibrationStats}
+                    onStatChange={onCalibrationChange}
+                />
+              </CollapsibleContent>
+             </Collapsible>
           )}
 
           {isLoading && !stats && (
@@ -356,3 +403,5 @@ const WeaponUploader = ({
 };
 
 export default WeaponUploader;
+
+    
