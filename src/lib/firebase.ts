@@ -1,9 +1,8 @@
 
 import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, EmailAuthProvider } from 'firebase/auth';
-import { getFirestore, collection, doc, setDoc, getDoc, query, where, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, updateDoc, query } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
-import { v4 as uuidv4 } from 'uuid';
 import type { WeaponStats, CalibrationStats } from './ocr';
 
 const firebaseConfig: FirebaseOptions = {
@@ -23,7 +22,6 @@ export const firestore = getFirestore(app);
 export const storage = getStorage(app);
 
 export const googleProvider = new GoogleAuthProvider();
-export const emailProvider = new EmailAuthProvider();
 
 export interface Loadout {
     id: string;
@@ -35,11 +33,8 @@ export interface Loadout {
     createdAt: Date;
 }
 
-// Firestore collection reference
-const loadoutsCollection = collection(firestore, 'loadouts');
-
 // Save a new loadout
-export async function saveLoadout(userId: string, loadoutData: Omit<Loadout, 'imageUrl'>, imageUri: string): Promise<void> {
+export async function saveLoadout(userId: string, loadoutData: Omit<Loadout, 'imageUrl' | 'createdAt'>, imageUri: string): Promise<void> {
     if (!userId) throw new Error("User not authenticated.");
 
     // 1. Upload image to Firebase Storage
@@ -47,7 +42,7 @@ export async function saveLoadout(userId: string, loadoutData: Omit<Loadout, 'im
     const uploadResult = await uploadString(imageRef, imageUri, 'data_url');
     const imageUrl = await getDownloadURL(uploadResult.ref);
 
-    // 2. Create the full loadout object with the image URL
+    // 2. Create the full loadout object with the image URL and timestamp
     const finalLoadout: Loadout = {
         ...loadoutData,
         imageUrl,
