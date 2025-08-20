@@ -17,19 +17,19 @@ const normalizeStat = (value: number, max: number) => (value / max) * 100;
 
 const formulas: Record<WeaponType, Record<CombatRange, Record<keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>, number>>> = {
     "SMG": {
-        "Close Range": { damage: 0.25, accuracy: 0.30, control: 0.25, stability: 0.20, handling: 0.50, fireRate: 0.50, muzzleVelocity: 0.10, range: 0.10 },
-        "Mid Range":   { damage: 0.30, accuracy: 0.30, control: 0.40, stability: 0.40, handling: 0.30, fireRate: 0.20, muzzleVelocity: 0.10, range: 0.30 },
-        "Long Range":  { damage: 0.40, accuracy: 0.30, control: 0.40, stability: 0.40, handling: 0.10, fireRate: 0.10, muzzleVelocity: 0.25, range: 0.30 }
+        "Close Range": { damage: 0.30, accuracy: 0.30, control: 0.20, stability: 0.25, handling: 0.60, fireRate: 0.50, muzzleVelocity: 0.01, range: 0.01 },
+        "Mid Range":   { damage: 0.30, accuracy: 0.30, control: 0.40, stability: 0.50, handling: 0.40, fireRate: 0.30, muzzleVelocity: 0.01, range: 0.30 },
+        "Long Range":  { damage: 0.40, accuracy: 0.30, control: 0.40, stability: 0.50, handling: 0.10, fireRate: 0.10, muzzleVelocity: 0.25, range: 0.30 }
     },
     "Assault Rifle": {
-        "Close Range": { damage: 0.30, accuracy: 0.35, control: 0.30, stability: 0.30, handling: 0.40, fireRate: 0.40, muzzleVelocity: 0.15, range: 0.15 },
-        "Mid Range":   { damage: 0.50, accuracy: 0.40, control: 0.45, stability: 0.35, handling: 0.30, fireRate: 0.30, muzzleVelocity: 0.20, range: 0.40 },
-        "Long Range":  { damage: 0.50, accuracy: 0.35, control: 0.40, stability: 0.50, handling: 0.20, fireRate: 0.20, muzzleVelocity: 0.30, range: 0.40 }
+        "Close Range": { damage: 0.30, accuracy: 0.40, control: 0.20, stability: 0.25, handling: 0.60, fireRate: 0.50, muzzleVelocity: 0.01, range: 0.01 },
+        "Mid Range":   { damage: 0.50, accuracy: 0.40, control: 0.40, stability: 0.50, handling: 0.30, fireRate: 0.30, muzzleVelocity: 0.01, range: 0.40 },
+        "Long Range":  { damage: 0.50, accuracy: 0.40, control: 0.40, stability: 0.60, handling: 0.20, fireRate: 0.20, muzzleVelocity: 0.30, range: 0.40 }
     },
     "LMG": {
-        "Close Range": { damage: 0.35, accuracy: 0.30, control: 0.30, stability: 0.35, handling: 0.25, fireRate: 0.40, muzzleVelocity: 0.20, range: 0.20 },
-        "Mid Range":   { damage: 0.50, accuracy: 0.35, control: 0.40, stability: 0.40, handling: 0.25, fireRate: 0.30, muzzleVelocity: 0.25, range: 0.40 },
-        "Long Range":  { damage: 0.55, accuracy: 0.40, control: 0.50, stability: 0.50, handling: 0.15, fireRate: 0.20, muzzleVelocity: 0.35, range: 0.50 }
+        "Close Range": { damage: 0.35, accuracy: 0.30, control: 0.20, stability: 0.25, handling: 0.45, fireRate: 0.40, muzzleVelocity: 0.01, range: 0.20 },
+        "Mid Range":   { damage: 0.50, accuracy: 0.35, control: 0.45, stability: 0.40, handling: 0.30, fireRate: 0.30, muzzleVelocity: 0.02, range: 0.04 },
+        "Long Range":  { damage: 0.55, accuracy: 0.40, control: 0.50, stability: 0.60, handling: 0.15, fireRate: 0.20, muzzleVelocity: 0.35, range: 0.50 }
     },
     "Marksman Rifle": {
         "Close Range": { damage: 0.35, accuracy: 0.35, control: 0.25, stability: 0.25, handling: 0.30, fireRate: 0.30, muzzleVelocity: 0.20, range: 0.20 },
@@ -126,7 +126,10 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
                   <h4 className="font-headline text-lg">{data.weapon1Stats.name || 'Weapon 1'}</h4>
                   <span className="text-xs text-muted-foreground">({data.weapon1Stats.type})</span>
                 </div>
-                <span className="font-code text-xl font-bold">{weapon1Score}</span>
+                <span className={cn(
+                  "font-code text-xl font-bold",
+                  winner === (data.weapon1Stats.name || 'Weapon 1') ? 'text-foreground' : 'text-muted-foreground'
+                )}>{weapon1Score}</span>
               </div>
               <Progress value={(weapon1Score / maxScore) * 100} className={cn(winner === (data.weapon1Stats.name || 'Weapon 1') && '[&>div]:bg-accent')} />
             </div>
@@ -137,7 +140,10 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
                   <h4 className="font-headline text-lg">{data.weapon2Stats.name || 'Weapon 2'}</h4>
                   <span className="text-xs text-muted-foreground">({data.weapon2Stats.type})</span>
                 </div>
-                <span className="font-code text-xl font-bold">{weapon2Score}</span>
+                <span className={cn(
+                  "font-code text-xl font-bold",
+                   winner === (data.weapon2Stats.name || 'Weapon 2') ? 'text-foreground' : 'text-muted-foreground'
+                )}>{weapon2Score}</span>
               </div>
               <Progress value={(weapon2Score / maxScore) * 100} className={cn(winner === (data.weapon2Stats.name || 'Weapon 2') && '[&>div]:bg-accent')} />
             </div>

@@ -6,12 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { StatBarComparison } from './stat-bar';
 import { Badge } from './ui/badge';
 import type { ComparatorStats } from './weapon-comparator';
+import { AlertCircle } from 'lucide-react';
 
 interface StatsComparisonProps {
   data: ComparatorStats;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
   'damage',
   'fireRate',
   'range',
@@ -22,9 +23,42 @@ const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type'>)[] = [
   'muzzleVelocity',
 ];
 
+const TTKDisplay = ({ weaponStats, winner }: { weaponStats: WeaponStats, winner: string | null }) => (
+    <div className='flex flex-col items-center gap-1'>
+        <Badge variant={winner === weaponStats.name ? "default" : "secondary"} className="text-lg px-4 py-1 bg-primary/20 text-primary-foreground border-primary">
+            {weaponStats.ttk}ms
+        </Badge>
+        <span className='text-xs text-muted-foreground'>({weaponStats.shotsToKill} shots)</span>
+         {weaponStats.fireRateInputType === 'stat' && (
+            <div className='flex items-center gap-1 text-xs text-amber-500 mt-1'>
+                <AlertCircle className='h-3 w-3' />
+                <span>est. RPM: {weaponStats.rpmUsed}</span>
+            </div>
+        )}
+    </div>
+);
+
+
 const StatsComparison = ({ data }: StatsComparisonProps) => {
   const { weapon1Stats, weapon2Stats } = data;
-  const ttkWinner = weapon1Stats.ttk < weapon2Stats.ttk ? weapon1Stats.name : weapon2Stats.name;
+  
+  let ttkWinner: string | null = null;
+  if (weapon1Stats.ttk > 0 && weapon2Stats.ttk > 0) {
+      if (weapon1Stats.ttk < weapon2Stats.ttk) {
+          ttkWinner = weapon1Stats.name;
+      } else if (weapon2Stats.ttk < weapon1Stats.ttk) {
+          ttkWinner = weapon2Stats.name;
+      }
+  } else if (weapon1Stats.ttk > 0) {
+      ttkWinner = weapon1Stats.name;
+  } else if (weapon2Stats.ttk > 0) {
+      ttkWinner = weapon2Stats.name;
+  }
+  
+  const score1 = weapon1Stats.finalScore || 0;
+  const score2 = weapon2Stats.finalScore || 0;
+  const scoreWinner = score1 > score2 ? weapon1Stats.name : (score2 > score1 ? weapon2Stats.name : null);
+
 
   return (
     <div className="animate-in fade-in-0 duration-500">
@@ -38,11 +72,17 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
              <div className="text-right">
                 <h3 className="text-lg font-headline">{weapon1Stats.name || 'Weapon 1'}</h3>
                 <p className="text-xs text-muted-foreground">{weapon1Stats.type}</p>
+                <p className="text-xs text-muted-foreground">Score: <span className="font-bold text-accent">{score1.toFixed(2)}</span></p>
+
              </div>
-             <div></div>
+             <div className="text-center">
+                <h4 className="font-headline text-lg">Final Score</h4>
+                {scoreWinner && <p className="text-xs text-accent">🏆 {scoreWinner}</p>}
+             </div>
              <div className="text-left">
                 <h3 className="text-lg font-headline">{weapon2Stats.name || 'Weapon 2'}</h3>
                 <p className="text-xs text-muted-foreground">{weapon2Stats.type}</p>
+                <p className="text-xs text-muted-foreground">Score: <span className="font-bold text-accent">{score2.toFixed(2)}</span></p>
              </div>
           </div>
 
@@ -51,7 +91,7 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
               const value1 = weapon1Stats[statName];
               const value2 = weapon2Stats[statName];
 
-              if (typeof value1 === 'undefined' || typeof value2 === 'undefined') {
+              if (typeof value1 === 'undefined' || typeof value2 === 'undefined' || value1 === 0 && value2 === 0) {
                 return null;
               }
 
@@ -61,7 +101,11 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
               }
 
               let unit: string | undefined;
-              if (statName === 'fireRate') unit = 'RPM';
+              if (statName === 'fireRate') {
+                const fr1Type = weapon1Stats.fireRateInputType;
+                const fr2Type = weapon2Stats.fireRateInputType;
+                if(fr1Type === 'rpm' || fr2Type === 'rpm') unit = 'RPM';
+              }
               if (statName === 'muzzleVelocity') unit = 'm/s';
 
               return (
@@ -77,14 +121,10 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
             })}
              <div className="text-center pt-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${statDisplayOrder.length * 100}ms`}}>
                 <h4 className='font-headline text-xl mb-2'>Time to Kill (100 HP)</h4>
-                <div className="flex justify-center items-center gap-4">
-                  <Badge variant={ttkWinner === weapon1Stats.name ? "default" : "secondary"} className="text-lg px-4 py-1 bg-primary/20 text-primary-foreground border-primary">
-                    {weapon1Stats.ttk}ms
-                  </Badge>
-                  <span className='text-muted-foreground'>vs</span>
-                  <Badge variant={ttkWinner === weapon2Stats.name ? "default" : "secondary"} className="text-lg px-4 py-1 bg-primary/20 text-primary-foreground border-primary">
-                    {weapon2Stats.ttk}ms
-                  </Badge>
+                <div className="flex justify-center items-start gap-4">
+                    <TTKDisplay weaponStats={weapon1Stats} winner={ttkWinner} />
+                    <span className='text-muted-foreground pt-2'>vs</span>
+                    <TTKDisplay weaponStats={weapon2Stats} winner={ttkWinner} />
                 </div>
                 { ttkWinner &&
                   <p className='text-sm text-accent mt-2'>
@@ -100,3 +140,5 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
 };
 
 export default StatsComparison;
+
+    
