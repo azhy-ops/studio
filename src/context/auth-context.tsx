@@ -111,7 +111,7 @@ function AuthDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                 <DialogHeader>
                     <DialogTitle>Authenticate</DialogTitle>
                     <DialogDescription>
-                        Sign in or create an account to save and manage your loadouts.
+                        Login to save your loadout.
                     </DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="signin" className="w-full">
