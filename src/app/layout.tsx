@@ -5,6 +5,8 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import Footer from '@/components/footer';
+import { AuthProvider } from '@/context/auth-context';
+import Header from '@/components/header';
 
 export const metadata: Metadata = {
   title: 'weapon compare | Analyze & Compare In-Game Weapon Stats',
@@ -30,11 +32,14 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased flex flex-col min-h-screen')}>
-        <div className="flex-grow">
-          {children}
-        </div>
-        <Footer />
-        <Toaster />
+        <AuthProvider>
+          <Header />
+          <div className="flex-grow">
+            {children}
+          </div>
+          <Footer />
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

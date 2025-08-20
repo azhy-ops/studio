@@ -254,11 +254,12 @@ const WeaponUploader = ({
   const defaultName = isSingleUploader ? 'Weapon Name' : `Weapon ${weaponNumber}`;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 relative">
+      {children}
       <Card className="flex flex-col items-center justify-center transition-all hover:border-accent">
         <CardContent className="p-4 w-full space-y-2">
            <div className="flex flex-col items-center justify-center w-full">
-            {children}
+            
           </div>
           <div
             onClick={handleImageContainerClick}
@@ -362,7 +363,7 @@ const WeaponUploader = ({
               <CollapsibleContent>
                 <CalibrationPanel
                     stats={calibrationStats}
-                    onStatChange={onCalibrationChange}
+                    onCalibrationChange={onCalibrationChange}
                 />
               </CollapsibleContent>
              </Collapsible>
@@ -403,5 +404,3 @@ const WeaponUploader = ({
 };
 
 export default WeaponUploader;
-
-    

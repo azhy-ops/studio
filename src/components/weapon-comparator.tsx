@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, ChangeEvent, useMemo, FocusEvent } from 'react';
-import { Dices, AlertTriangle } from 'lucide-react';
+import { useState, ChangeEvent, useMemo, FocusEvent, useContext } from 'react';
+import { Dices, AlertTriangle, Save, Heart } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +13,12 @@ import CombatRangeComparison from '@/components/combat-range-comparison';
 import { ImageCropperDialog } from './image-cropper-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Disclaimer from './disclaimer';
+import { AuthContext, useAuth } from '@/context/auth-context';
+import { saveLoadout, type Loadout } from '@/lib/firebase';
+import { v4 as uuidv4 } from 'uuid';
+import { Input } from './ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog';
+import { Loader2 } from 'lucide-react';
 
 export interface ComparatorStats {
     weapon1Stats: WeaponStats;
@@ -59,6 +65,10 @@ export default function WeaponComparator() {
   const [stats, setStats] = useState<ComparatorStats | null>(null);
   const [isProcessing, setIsProcessing] = useState<false | 1 | 2>(false);
   const { toast } = useToast();
+  const { user, openAuthDialog } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadoutToSave, setLoadoutToSave] = useState<{ weaponNumber: 1 | 2, name: string } | null>(null);
+  const [loadoutName, setLoadoutName] = useState("");
 
   const finalWeapon1Stats = useMemo(() => {
     if (!weapon1Stats) return null;
@@ -223,6 +233,60 @@ export default function WeaponComparator() {
       [statName]: isNaN(numericValue) ? 0 : numericValue,
     }));
   };
+  
+  const handleInitiateSave = (weaponNumber: 1 | 2) => {
+    if (!user) {
+      openAuthDialog();
+      return;
+    }
+
+    const statsToSave = weaponNumber === 1 ? finalWeapon1Stats : finalWeapon2Stats;
+    if (!statsToSave) {
+        toast({ title: "Error", description: "No stats to save.", variant: "destructive" });
+        return;
+    }
+    
+    setLoadoutToSave({ weaponNumber, name: statsToSave.name });
+    setLoadoutName(statsToSave.name);
+  };
+  
+  const handleConfirmSave = async () => {
+    if (!user || !loadoutToSave) return;
+    setIsSaving(true);
+
+    const { weaponNumber } = loadoutToSave;
+    const baseStats = weaponNumber === 1 ? weapon1Stats : weapon2Stats;
+    const calibration = weaponNumber === 1 ? weapon1Calibration : weapon2Calibration;
+    const previewUrl = weaponNumber === 1 ? weapon1Preview : weapon2Preview;
+    
+    if (!baseStats || !previewUrl) {
+        toast({ title: "Error", description: "Cannot save incomplete loadout.", variant: "destructive" });
+        setIsSaving(false);
+        return;
+    }
+
+    const loadout: Loadout = {
+        id: uuidv4(),
+        userId: user.uid,
+        name: loadoutName,
+        imageUrl: '', // This will be replaced by the storage URL
+        baseStats,
+        calibrationStats: calibration,
+        createdAt: new Date(),
+    };
+
+    try {
+        await saveLoadout(user.uid, loadout, previewUrl);
+        toast({ title: "Success", description: "Loadout saved successfully!" });
+        setLoadoutToSave(null);
+        setLoadoutName("");
+    } catch (error) {
+        console.error("Failed to save loadout: ", error);
+        toast({ title: "Error", description: "Failed to save loadout. Please try again.", variant: "destructive" });
+    } finally {
+        setIsSaving(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-6xl space-y-8">
@@ -232,6 +296,34 @@ export default function WeaponComparator() {
             onCropComplete={handleCropComplete}
             isProcessing={!!isProcessing}
         />
+        
+        <Dialog open={!!loadoutToSave} onOpenChange={() => setLoadoutToSave(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Save Loadout</DialogTitle>
+                    <DialogDescription>
+                        Give your loadout a name to save it to your profile.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <Input
+                        id="loadout-name"
+                        value={loadoutName}
+                        onChange={(e) => setLoadoutName(e.target.value)}
+                        placeholder="e.g., Close-Range SMG Build"
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setLoadoutToSave(null)}>Cancel</Button>
+                    <Button onClick={handleConfirmSave} disabled={isSaving || !loadoutName.trim()}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Loadout
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+
        <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Pro Tip for Accurate Results</AlertTitle>
@@ -263,7 +355,13 @@ export default function WeaponComparator() {
           calibrationStats={weapon1Calibration}
           onCalibrationChange={(stat, value) => handleCalibrationChange(1, stat, value)}
           finalStats={finalWeapon1Stats}
-        />
+        >
+          {user && weapon1Stats && (
+            <Button variant="outline" size="sm" className="absolute top-2 right-2 z-10" onClick={() => handleInitiateSave(1)}>
+              <Heart className="mr-2 h-4 w-4" /> Save
+            </Button>
+          )}
+        </WeaponUploader>
         <WeaponUploader
           weaponNumber={2}
           previewUrl={weapon2Preview}
@@ -282,7 +380,13 @@ export default function WeaponComparator() {
           calibrationStats={weapon2Calibration}
           onCalibrationChange={(stat, value) => handleCalibrationChange(2, stat, value)}
           finalStats={finalWeapon2Stats}
-        />
+        >
+          {user && weapon2Stats && (
+            <Button variant="outline" size="sm" className="absolute top-2 right-2 z-10" onClick={() => handleInitiateSave(2)}>
+               <Heart className="mr-2 h-4 w-4" /> Save
+            </Button>
+          )}
+        </WeaponUploader>
       </div>
 
       <div className="flex w-full justify-center">
@@ -309,5 +413,3 @@ export default function WeaponComparator() {
     </div>
   );
 }
-
-    
