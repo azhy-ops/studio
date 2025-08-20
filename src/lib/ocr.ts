@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { createWorker, type Worker } from 'tesseract.js';
@@ -169,10 +170,10 @@ export function calculateFinalStats(baseStats: WeaponStats, calibration: Calibra
 
     return {
         ...baseStats,
-        control: finalControl,
-        accuracy: finalAccuracy,
-        handling: finalHandling,
-        stability: finalStability,
+        control: parseFloat(finalControl.toFixed(2)),
+        accuracy: parseFloat(finalAccuracy.toFixed(2)),
+        handling: parseFloat(finalHandling.toFixed(2)),
+        stability: parseFloat(finalStability.toFixed(2)),
     };
 }
 
@@ -193,7 +194,7 @@ export function calculateFinalScore(stats: WeaponStats): number {
         (range * 0.05) +
         (normMuzzleVelocity * 0.05);
 
-    return score;
+    return parseFloat(score.toFixed(2));
 }
 
     
