@@ -80,7 +80,7 @@ function LoadoutCard({ loadout, onDelete, onUpdate }: { loadout: Loadout, onDele
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="relative aspect-video w-full rounded-md overflow-hidden">
-                    <Image src={loadout.imageUrl} alt={loadout.name} layout="fill" objectFit="contain" />
+                    <Image src={loadout.imageDataUri} alt={loadout.name} layout="fill" objectFit="contain" />
                 </div>
                 <div className="text-center font-bold text-lg">Final Score: <span className="text-accent">{finalScore.toFixed(2)}</span></div>
                 <div className="space-y-2">

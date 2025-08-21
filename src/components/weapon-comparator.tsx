@@ -265,16 +265,17 @@ export default function WeaponComparator() {
         return;
     }
 
-    const loadout: Omit<Loadout, 'imageUrl' | 'createdAt'> = {
+    const loadout: Omit<Loadout, 'createdAt'> = {
         id: uuidv4(),
         userId: user.uid,
         name: loadoutName,
         baseStats,
         calibrationStats: calibration,
+        imageDataUri: previewUrl,
     };
 
     try {
-        await saveLoadout(user.uid, loadout, previewUrl);
+        await saveLoadout(user.uid, loadout);
         toast({ title: "Success", description: "Loadout saved successfully!" });
         setLoadoutToSave(null);
         setLoadoutName("");

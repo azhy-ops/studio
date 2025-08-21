@@ -28,29 +28,23 @@ export interface Loadout {
     id: string;
     userId: string;
     name: string;
-    imageUrl: string;
+    imageDataUri: string; // Changed from imageUrl
     baseStats: WeaponStats;
     calibrationStats: CalibrationStats;
     createdAt: Date;
 }
 
 // Save a new loadout
-export async function saveLoadout(userId: string, loadoutData: Omit<Loadout, 'imageUrl' | 'createdAt'>, imageUri: string): Promise<void> {
+export async function saveLoadout(userId: string, loadoutData: Omit<Loadout, 'createdAt'>): Promise<void> {
     if (!userId) throw new Error("User not authenticated.");
 
-    // 1. Upload image to Firebase Storage
-    const imageRef = ref(storage, `loadouts/${userId}/${loadoutData.id}.png`);
-    const uploadResult = await uploadString(imageRef, imageUri, 'data_url');
-    const imageUrl = await getDownloadURL(uploadResult.ref);
-
-    // 2. Create the full loadout object with the image URL and timestamp
+    // Create the full loadout object with a timestamp
     const finalLoadout: Loadout = {
         ...loadoutData,
-        imageUrl,
         createdAt: new Date(),
     };
 
-    // 3. Save loadout data to Firestore
+    // Save loadout data (including imageDataUri) directly to Firestore
     const loadoutDocRef = doc(firestore, `users/${userId}/loadouts`, finalLoadout.id);
     await setDoc(loadoutDocRef, finalLoadout);
 }
@@ -74,20 +68,9 @@ export async function getLoadouts(userId: string): Promise<Loadout[]> {
 export async function deleteLoadout(userId: string, loadoutId: string): Promise<void> {
     if (!userId) throw new Error("User not authenticated.");
 
-    // 1. Delete Firestore document
+    // Only need to delete the Firestore document now
     const loadoutDocRef = doc(firestore, `users/${userId}/loadouts`, loadoutId);
     await deleteDoc(loadoutDocRef);
-
-    // 2. Delete image from Storage
-    const imageRef = ref(storage, `loadouts/${userId}/${loadoutId}.png`);
-    try {
-        await deleteObject(imageRef);
-    } catch (error: any) {
-        if (error.code !== 'storage/object-not-found') {
-            throw error; // re-throw if it's not a "not found" error
-        }
-        console.warn(`Image for loadout ${loadoutId} not found, but document deleted.`);
-    }
 }
 
 // Update a loadout
