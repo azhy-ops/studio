@@ -2,8 +2,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { auth, googleProvider } from '../lib/firebase';
-import { onAuthStateChanged, signInWithPopup, signOut, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, User, signOut } from 'firebase/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,20 +62,6 @@ function AuthDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
-
-    const handleGoogleSignIn = async () => {
-        setIsSubmitting(true);
-        try {
-            await signInWithPopup(auth, googleProvider);
-            onClose();
-            toast({ title: 'Success', description: 'Logged in successfully!' });
-        } catch (error: any) {
-            console.error(error);
-            toast({ title: 'Error', description: error.message, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
     
     const handleEmailSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -152,20 +138,6 @@ function AuthDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                         </form>
                     </TabsContent>
                 </Tabs>
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">
-                            Or continue with
-                        </span>
-                    </div>
-                </div>
-                <Button variant="outline" onClick={handleGoogleSignIn} disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 62.3l-66.5 64.6C305.5 102.6 277.9 88 248 88c-73.2 0-132.3 59.2-132.3 132.3s59.1 132.3 132.3 132.3c76.9 0 111.2-51.8 115.8-77.9H248v-65.4h235.5c.7 22.4 4.8 46.1 4.8 73.1z"></path></svg>}
-                    Google
-                </Button>
             </DialogContent>
         </Dialog>
     );
