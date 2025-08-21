@@ -265,14 +265,12 @@ export default function WeaponComparator() {
         return;
     }
 
-    const loadout: Loadout = {
+    const loadout: Omit<Loadout, 'imageUrl' | 'createdAt'> = {
         id: uuidv4(),
         userId: user.uid,
         name: loadoutName,
-        imageUrl: '', // This will be replaced by the storage URL
         baseStats,
         calibrationStats: calibration,
-        createdAt: new Date(),
     };
 
     try {
@@ -297,7 +295,7 @@ export default function WeaponComparator() {
             isProcessing={!!isProcessing}
         />
         
-        <Dialog open={!!loadoutToSave} onOpenChange={() => setLoadoutToSave(null)}>
+        <Dialog open={!!loadoutToSave} onOpenChange={(isOpen) => !isOpen && setLoadoutToSave(null)}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Save Loadout</DialogTitle>
