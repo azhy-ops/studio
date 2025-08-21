@@ -363,7 +363,7 @@ const WeaponUploader = ({
               <CollapsibleContent>
                 <CalibrationPanel
                     stats={calibrationStats}
-                    onCalibrationChange={onCalibrationChange}
+                    onStatChange={onCalibrationChange}
                 />
               </CollapsibleContent>
              </Collapsible>
