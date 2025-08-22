@@ -6,7 +6,8 @@ import { Dices, AlertTriangle, Save, Heart, BookMarked } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { extractStatsFromImage, type WeaponStats, type CalibrationStats, calculateFinalStats, calculateFinalScore, getLoadouts } from '@/lib/ocr';
+import { extractStatsFromImage, type WeaponStats, type CalibrationStats, calculateFinalStats, calculateFinalScore } from '@/lib/ocr';
+import { getLoadouts } from '@/lib/firebase';
 import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
@@ -17,7 +18,7 @@ import { AuthContext, useAuth } from '@/context/auth-context';
 import { saveLoadout, type Loadout } from '@/lib/firebase';
 import { v4 as uuidv4 } from 'uuid';
 import { Input } from './ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger, DialogClose } from './ui/dialog';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
@@ -75,7 +76,6 @@ function SavedLoadoutsDialog({ onSelectLoadout }: { onSelectLoadout: (loadout: L
     
     const handleSelect = (loadout: Loadout) => {
         onSelectLoadout(loadout);
-        // Maybe close dialog here if it's a DialogClose trigger
     }
 
     return (
@@ -299,7 +299,6 @@ export default function WeaponComparator() {
   };
 
   const handleCalibrationChange = (weaponNumber: 1 | 2, statName: keyof CalibrationStats, value: string) => {
-    const numericValue = parseInt(value, 10);
     const setCalibrationHandler = weaponNumber === 1 ? setWeapon1Calibration : setWeapon2Calibration;
     setCalibrationHandler(prev => ({
       ...prev,
@@ -338,14 +337,13 @@ export default function WeaponComparator() {
         return;
     }
 
-    const loadout: Loadout = {
+    const loadout: Omit<Loadout, 'createdAt'> = {
         id: uuidv4(),
         userId: user.uid,
         name: loadoutName,
         baseStats,
         calibrationStats: calibration,
         imageDataUri: previewUrl,
-        createdAt: new Date(),
     };
 
     try {
@@ -496,5 +494,3 @@ export default function WeaponComparator() {
     </div>
   );
 }
-
-    

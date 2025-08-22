@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, updateDoc, query } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import type { WeaponStats, CalibrationStats } from './ocr';
 
@@ -28,7 +28,7 @@ export interface Loadout {
     id: string;
     userId: string;
     name: string;
-    imageDataUri: string; // Changed from imageUrl
+    imageDataUri: string;
     baseStats: WeaponStats;
     calibrationStats: CalibrationStats;
     createdAt: Date;
@@ -38,13 +38,11 @@ export interface Loadout {
 export async function saveLoadout(userId: string, loadoutData: Omit<Loadout, 'createdAt'>): Promise<void> {
     if (!userId) throw new Error("User not authenticated.");
 
-    // Create the full loadout object with a timestamp
     const finalLoadout: Loadout = {
         ...loadoutData,
         createdAt: new Date(),
     };
 
-    // Save loadout data (including imageDataUri) directly to Firestore
     const loadoutDocRef = doc(firestore, `users/${userId}/loadouts`, finalLoadout.id);
     await setDoc(loadoutDocRef, finalLoadout);
 }
@@ -54,13 +52,16 @@ export async function getLoadouts(userId: string): Promise<Loadout[]> {
     if (!userId) return [];
 
     const userLoadoutsRef = collection(firestore, `users/${userId}/loadouts`);
-    const q = query(userLoadoutsRef);
+    const q = query(userLoadoutsRef, orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        createdAt: doc.data().createdAt.toDate(),
-    })) as Loadout[];
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            ...data,
+            createdAt: data.createdAt.toDate(), // Correctly convert Firestore Timestamp to JS Date
+        } as Loadout;
+    });
 }
 
 
@@ -68,13 +69,12 @@ export async function getLoadouts(userId: string): Promise<Loadout[]> {
 export async function deleteLoadout(userId: string, loadoutId: string): Promise<void> {
     if (!userId) throw new Error("User not authenticated.");
 
-    // Only need to delete the Firestore document now
     const loadoutDocRef = doc(firestore, `users/${userId}/loadouts`, loadoutId);
     await deleteDoc(loadoutDocRef);
 }
 
 // Update a loadout
-export async function updateLoadout(userId: string, loadoutId: string, updates: Partial<Loadout>): Promise<void> {
+export async function updateLoadout(userId: string, loadoutId: string, updates: Partial<Omit<Loadout, 'id' | 'userId' | 'createdAt'>>): Promise<void> {
     if (!userId) throw new Error("User not authenticated.");
 
     const loadoutDocRef = doc(firestore, `users/${userId}/loadouts`, loadoutId);

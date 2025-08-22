@@ -85,9 +85,9 @@ function LoadoutCard({ loadout, onDelete, onUpdate }: { loadout: Loadout, onDele
                 <div className="text-center font-bold text-lg">Final Score: <span className="text-accent">{finalScore.toFixed(2)}</span></div>
                 <div className="space-y-2">
                     {statDisplayOrder.map(statKey => {
-                        const value = finalStats[statKey];
+                        const value = finalStats[statKey as keyof typeof finalStats];
                         if (value === undefined || value === 0) return null;
-                        return <SimpleStatBar key={statKey} statName={statKey} value={value} label={statKey} />;
+                        return <SimpleStatBar key={statKey} statName={statKey} value={value as number} label={statKey} />;
                     })}
                 </div>
             </CardContent>
@@ -104,7 +104,6 @@ export default function MyLoadoutsPage() {
     useEffect(() => {
         if (authLoading) return;
         if (!user) {
-            // Redirect or show login prompt
             setLoading(false);
             return;
         }
@@ -114,6 +113,7 @@ export default function MyLoadoutsPage() {
                 const userLoadouts = await getLoadouts(user!.uid);
                 setLoadouts(userLoadouts);
             } catch (error) {
+                console.error("Failed to fetch loadouts:", error);
                 toast({ title: "Error", description: "Failed to fetch loadouts.", variant: "destructive" });
             } finally {
                 setLoading(false);
