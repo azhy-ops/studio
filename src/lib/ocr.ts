@@ -3,6 +3,7 @@
 'use client';
 
 import { createWorker, type Worker } from 'tesseract.js';
+import { getLoadouts } from './firebase';
 
 export interface WeaponStats {
     name: string;
@@ -152,7 +153,7 @@ async function extractStatsFromImage(dataUri: string): Promise<Omit<WeaponStats,
 extractStatsFromImage.calculateTTK = calculateTTK;
 
 
-export { extractStatsFromImage };
+export { extractStatsFromImage, getLoadouts };
 
 
 export async function terminateWorker() {
@@ -197,4 +198,5 @@ export function calculateFinalScore(stats: WeaponStats): number {
     return parseFloat(score.toFixed(2));
 }
 
+    
     

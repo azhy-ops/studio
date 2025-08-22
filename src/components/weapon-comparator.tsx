@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, ChangeEvent, useMemo, FocusEvent, useContext } from 'react';
-import { Dices, AlertTriangle, Save, Heart } from 'lucide-react';
+import { Dices, AlertTriangle, Save, Heart, BookMarked } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { extractStatsFromImage, type WeaponStats, type CalibrationStats, calculateFinalStats, calculateFinalScore } from '@/lib/ocr';
+import { extractStatsFromImage, type WeaponStats, type CalibrationStats, calculateFinalStats, calculateFinalScore, getLoadouts } from '@/lib/ocr';
 import StatsComparison from '@/components/stats-comparison';
 import WeaponUploader from '@/components/weapon-uploader';
 import CombatRangeComparison from '@/components/combat-range-comparison';
@@ -17,8 +17,10 @@ import { AuthContext, useAuth } from '@/context/auth-context';
 import { saveLoadout, type Loadout } from '@/lib/firebase';
 import { v4 as uuidv4 } from 'uuid';
 import { Input } from './ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from './ui/dialog';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 
 export interface ComparatorStats {
     weapon1Stats: WeaponStats;
@@ -49,6 +51,77 @@ const initialCalibrationStats = (): CalibrationStats => ({
     hipFireAimSpeed: 0,
 });
 
+function SavedLoadoutsDialog({ onSelectLoadout }: { onSelectLoadout: (loadout: Loadout) => void }) {
+    const { user } = useAuth();
+    const [loadouts, setLoadouts] = useState<Loadout[]>([]);
+    const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
+
+    const handleOpen = async () => {
+        if (!user) {
+            toast({ title: "Please log in", description: "You need to be logged in to see saved loadouts.", variant: 'destructive' });
+            return;
+        }
+        setLoading(true);
+        try {
+            const userLoadouts = await getLoadouts(user.uid);
+            setLoadouts(userLoadouts);
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to fetch saved loadouts.", variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    const handleSelect = (loadout: Loadout) => {
+        onSelectLoadout(loadout);
+        // Maybe close dialog here if it's a DialogClose trigger
+    }
+
+    return (
+        <Dialog onOpenChange={(isOpen) => isOpen && handleOpen()}>
+            <DialogTrigger asChild>
+                <Button size="lg" variant="outline" className="font-headline text-lg">
+                    <BookMarked className="mr-2 h-5 w-5" />
+                    Compare with Saved
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Select a Saved Loadout</DialogTitle>
+                    <DialogDescription>Choose one of your saved loadouts to compare against.</DialogDescription>
+                </DialogHeader>
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto p-1">
+                        {loadouts.length > 0 ? loadouts.map(loadout => (
+                             <DialogClose key={loadout.id} asChild>
+                                <Card
+                                    onClick={() => handleSelect(loadout)}
+                                    className="cursor-pointer hover:border-accent transition-colors"
+                                >
+                                    <CardHeader className="p-4">
+                                        <CardTitle className="text-base font-headline">{loadout.name}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <div className="relative aspect-video w-full rounded-md overflow-hidden bg-muted">
+                                            <Image src={loadout.imageDataUri} alt={loadout.name} layout="fill" objectFit="contain" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </DialogClose>
+                        )) : (
+                            <p className="text-muted-foreground col-span-full text-center">No saved loadouts found.</p>
+                        )}
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export default function WeaponComparator() {
   const [imageToCrop, setImageToCrop] = useState<{ src: string | null; weapon: 1 | 2 }>({ src: null, weapon: 1 });
@@ -265,13 +338,14 @@ export default function WeaponComparator() {
         return;
     }
 
-    const loadout: Omit<Loadout, 'createdAt'> = {
+    const loadout: Loadout = {
         id: uuidv4(),
         userId: user.uid,
         name: loadoutName,
         baseStats,
         calibrationStats: calibration,
         imageDataUri: previewUrl,
+        createdAt: new Date(),
     };
 
     try {
@@ -286,6 +360,13 @@ export default function WeaponComparator() {
         setIsSaving(false);
     }
   };
+  
+  const handleSelectSavedLoadout = (loadout: Loadout) => {
+    setWeapon2Stats(loadout.baseStats);
+    setWeapon2Calibration(loadout.calibrationStats);
+    setWeapon2Preview(loadout.imageDataUri);
+    toast({ title: "Loadout Loaded", description: `"${loadout.name}" has been loaded into Weapon 2 slot.` });
+  }
 
   return (
     <div className="w-full max-w-6xl space-y-8">
@@ -388,7 +469,7 @@ export default function WeaponComparator() {
         </WeaponUploader>
       </div>
 
-      <div className="flex w-full justify-center">
+      <div className="flex w-full justify-center gap-4">
         <Button
           size="lg"
           onClick={handleCompare}
@@ -398,6 +479,9 @@ export default function WeaponComparator() {
           <Dices className="mr-2 h-5 w-5" />
           {'Compare Stats'}
         </Button>
+         {user && weapon1Stats && (
+            <SavedLoadoutsDialog onSelectLoadout={handleSelectSavedLoadout} />
+         )}
       </div>
 
       <div className="w-full">
@@ -412,3 +496,5 @@ export default function WeaponComparator() {
     </div>
   );
 }
+
+    
