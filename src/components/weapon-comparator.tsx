@@ -81,7 +81,7 @@ function SavedLoadoutsDialog({ onSelectLoadout }: { onSelectLoadout: (loadout: L
     return (
         <Dialog onOpenChange={(isOpen) => isOpen && handleOpen()}>
             <DialogTrigger asChild>
-                <Button size="lg" variant="outline" className="font-headline text-lg">
+                <Button size="lg" variant="outline" className="font-headline text-lg w-full sm:w-auto">
                     <BookMarked className="mr-2 h-5 w-5" />
                     Compare with Saved
                 </Button>
@@ -300,6 +300,7 @@ export default function WeaponComparator() {
 
   const handleCalibrationChange = (weaponNumber: 1 | 2, statName: keyof CalibrationStats, value: string) => {
     const setCalibrationHandler = weaponNumber === 1 ? setWeapon1Calibration : setWeapon2Calibration;
+    const numericValue = parseInt(value, 10);
     setCalibrationHandler(prev => ({
       ...prev,
       [statName]: isNaN(numericValue) ? 0 : numericValue,
@@ -467,12 +468,12 @@ export default function WeaponComparator() {
         </WeaponUploader>
       </div>
 
-      <div className="flex w-full justify-center gap-4">
+      <div className="flex w-full flex-col sm:flex-row items-center justify-center gap-4">
         <Button
           size="lg"
           onClick={handleCompare}
           disabled={!weapon1Stats || !weapon2Stats || !!isProcessing}
-          className="font-headline text-lg"
+          className="font-headline text-lg w-full sm:w-auto"
         >
           <Dices className="mr-2 h-5 w-5" />
           {'Compare Stats'}

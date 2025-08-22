@@ -117,7 +117,7 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
              <p className="text-xs text-muted-foreground mt-2">{rangeDistances[selectedRange]}</p>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 min-h-[280px]">
           <div className="space-y-4">
             {/* Weapon 1 Score */}
             <div>

@@ -23,8 +23,8 @@ export default function Header() {
     return (
         <header className="w-full bg-background/50 backdrop-blur-sm border-b sticky top-0 z-50">
             <div className="container mx-auto py-3 px-4 md:px-8 flex justify-between items-center">
-                <Link href="/" className="flex items-center gap-2">
-                    <Image src="https://placehold.co/150x50.png" alt="weapon compare logo" width={120} height={40} data-ai-hint="logo gaming" />
+                <Link href="/" className="flex items-center gap-2 text-xl font-bold font-headline">
+                    Weapon Compare
                 </Link>
                 <nav className="flex items-center gap-4">
                      {loading ? (
