@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { AlertTriangle, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const weaponTypes = ["SMG", "Assault Rifle", "LMG", "Marksman Rifle", "Sniper", "Pistol"];
+const weaponTypes = ["SMG", "Assault Rifle", "LMG"];
 
 const initialWeaponStats = (): Omit<WeaponStats, 'name' | 'stability' | 'range' | 'accuracy' | 'control' | 'handling' | 'muzzleVelocity'> => ({
   type: 'Assault Rifle',
@@ -54,6 +54,14 @@ const TtkCalculator = () => {
     }));
   };
 
+  const handleWeaponTypeChange = (value: string) => {
+    setStats(prev => ({
+      ...prev,
+      type: value,
+      maxRpmOverride: undefined, // Reset override when type changes
+    }));
+  };
+
   return (
     <Card className="w-full bg-card/50 backdrop-blur-sm">
       <CardHeader>
@@ -67,7 +75,7 @@ const TtkCalculator = () => {
               <Label htmlFor="weapon-type">Weapon Type</Label>
               <Select
                 value={stats.type}
-                onValueChange={(value) => handleStatChange('type', value)}
+                onValueChange={handleWeaponTypeChange}
               >
                 <SelectTrigger id="weapon-type">
                   <SelectValue placeholder="Select Type" />
