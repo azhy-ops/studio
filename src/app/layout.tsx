@@ -9,7 +9,7 @@ import { AuthProvider } from '@/context/auth-context';
 import Header from '@/components/header';
 
 export const metadata: Metadata = {
-  title: 'weapon compare | Analyze & Compare In-Game Weapon Stats',
+  title: 'Time to Kill Calculator & Weapon Comparison Tool Online',
   description: 'Upload screenshots of your favorite FPS weapons to automatically extract and compare stats like damage, fire rate, accuracy, and more. Make data-driven decisions for your perfect loadout.',
   verification: {
     google: 'a82m3ayYYCfO8VyX1n_4HJn6CvAuKLiyCfkG3OKH__g',
