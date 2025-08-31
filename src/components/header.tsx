@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LayoutGrid, LogOut, User as UserIcon } from 'lucide-react';
+import { LayoutGrid, LogOut, User as UserIcon, Calculator } from 'lucide-react';
 import Image from 'next/image';
 
 
@@ -26,7 +26,13 @@ export default function Header() {
                 <Link href="/" className="flex items-center gap-2 text-xl font-bold font-headline">
                     Weapon Compare
                 </Link>
-                <nav className="flex items-center gap-4">
+                <nav className="flex items-center gap-2">
+                     <Button variant="ghost" asChild>
+                        <Link href="/ttk-calculator">
+                            <Calculator className="mr-2 h-4 w-4" />
+                            TTK Calculator
+                        </Link>
+                    </Button>
                      {loading ? (
                         <div className="h-10 w-20 bg-muted rounded-md animate-pulse" />
                     ) : user ? (
