@@ -49,7 +49,7 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
         const norm2 = normalizeData(weapon2Stats);
 
         return statKeyMapping
-            .filter(key => (weapon1Stats[key] || 0) > 0 && (weapon2Stats[key] || 0) > 0)
+            .filter(key => (weapon1Stats[key] || 0) > 0 || (weapon2Stats[key] || 0) > 0)
             .map(key => ({
                 stat: formatLabel(key),
                 weapon1: norm1[key] || 0,
@@ -94,30 +94,40 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
                                         className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
                                         style={{ backgroundColor: item.payload.fill }}
                                     />
-                                    <span className={cn(name === 'weapon1' ? 'text-chart-1' : 'text-chart-2')}>{chartConfig[name as keyof typeof chartConfig].label}: </span>
-                                    <span className="font-bold">{value.toFixed(1)}</span>
+                                    <span className="text-sm">
+                                      <span className="font-semibold">{chartConfig[name as keyof typeof chartConfig].label}: </span>
+                                      <span className="font-mono text-foreground">{value.toFixed(0)}</span>
+                                    </span>
                                 </div>
                             )}
                          />
                     }
                 />
-                 <PolarGrid className="fill-background stroke-border" />
+                 <PolarGrid gridType="polygon" className="fill-background stroke-border" />
                 <PolarAngleAxis dataKey="stat" className="fill-foreground text-xs" />
                 <Radar
                     name="weapon1"
                     dataKey="weapon1"
                     fill="var(--color-weapon1)"
-                    fillOpacity={0.4}
+                    fillOpacity={0.6}
                     stroke="var(--color-weapon1)"
                     strokeWidth={2}
+                    dot={{
+                      r: 4,
+                      fillOpacity: 1,
+                    }}
                 />
                 <Radar
                     name="weapon2"
                     dataKey="weapon2"
                     fill="var(--color-weapon2)"
-                    fillOpacity={0.4}
+                    fillOpacity={0.6}
                     stroke="var(--color-weapon2)"
                     strokeWidth={2}
+                     dot={{
+                      r: 4,
+                      fillOpacity: 1,
+                    }}
                 />
                  <ChartLegend
                     content={<ChartLegendContent />}
