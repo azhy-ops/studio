@@ -2,11 +2,10 @@
 "use client"
 
 import * as React from "react"
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts"
+import { PolarAngleAxis, PolarGrid, Radar, RadarChart, PolarRadiusAxis } from "recharts"
 import type { WeaponStats } from "@/lib/ocr"
 import type { ComparatorStats } from "./weapon-comparator"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import { cn } from "@/lib/utils"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
   'damage',
@@ -86,52 +85,33 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
                     cursor={false}
                     content={
                         <ChartTooltipContent
-                            labelKey="stat"
-                            indicator="dot"
-                            formatter={(value, name, item) => (
-                                <div className="flex items-center gap-2">
-                                     <div
-                                        className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                                        style={{ backgroundColor: item.payload.fill }}
-                                    />
-                                    <span className="text-sm">
-                                      <span className="font-semibold">{chartConfig[name as keyof typeof chartConfig].label}: </span>
-                                      <span className="font-mono text-foreground">{value.toFixed(0)}</span>
-                                    </span>
-                                </div>
-                            )}
-                         />
+                           indicator="line"
+                           labelClassName="font-bold text-lg"
+                        />
                     }
                 />
-                 <PolarGrid gridType="polygon" className="fill-background stroke-border" />
-                <PolarAngleAxis dataKey="stat" className="fill-foreground text-xs" />
+                 <PolarAngleAxis 
+                    dataKey="stat" 
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} 
+                 />
+                 <PolarRadiusAxis tickCount={4} tick={false} axisLine={false} />
+                 <PolarGrid gridType="polygon" className="stroke-border" />
                 <Radar
                     name="weapon1"
                     dataKey="weapon1"
                     fill="var(--color-weapon1)"
-                    fillOpacity={0.6}
+                    fillOpacity={0.1}
                     stroke="var(--color-weapon1)"
                     strokeWidth={2}
-                    dot={{
-                      r: 4,
-                      fillOpacity: 1,
-                    }}
                 />
                 <Radar
                     name="weapon2"
                     dataKey="weapon2"
                     fill="var(--color-weapon2)"
-                    fillOpacity={0.6}
+                    fillOpacity={0.1}
                     stroke="var(--color-weapon2)"
                     strokeWidth={2}
-                     dot={{
-                      r: 4,
-                      fillOpacity: 1,
-                    }}
                 />
-                 <ChartLegend
-                    content={<ChartLegendContent />}
-                 />
             </RadarChart>
         </ChartContainer>
     )

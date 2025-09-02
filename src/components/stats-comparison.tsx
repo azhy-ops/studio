@@ -57,14 +57,13 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
           <CardDescription>A visual breakdown of each weapon's strengths and weaknesses.</CardDescription>
         </CardHeader>
         <CardContent>
-           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 px-4 mb-4">
+           <div className="grid grid-cols-2 items-center gap-2 sm:gap-4 px-4 mb-4 text-center">
              <div className="text-right">
-                <h3 className="text-lg font-headline">{weapon1Stats.name || 'Weapon 1'}</h3>
+                <h3 className="text-lg font-headline text-chart-1">{weapon1Stats.name || 'Weapon 1'}</h3>
                 <p className="text-xs text-muted-foreground">{weapon1Stats.type}</p>
              </div>
-             <div />
              <div className="text-left">
-                <h3 className="text-lg font-headline">{weapon2Stats.name || 'Weapon 2'}</h3>
+                <h3 className="text-lg font-headline text-chart-2">{weapon2Stats.name || 'Weapon 2'}</h3>
                 <p className="text-xs text-muted-foreground">{weapon2Stats.type}</p>
              </div>
           </div>
