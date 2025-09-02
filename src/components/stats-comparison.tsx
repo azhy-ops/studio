@@ -68,7 +68,7 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
              </div>
           </div>
 
-          <div className="w-full aspect-square max-h-[500px] mx-auto">
+          <div className="w-full aspect-square max-h-[400px] mx-auto">
              <WeaponRadarChart data={data} />
           </div>
 

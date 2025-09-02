@@ -21,6 +21,7 @@ const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRa
 const formatLabel = (label: string) => {
     if (label === 'muzzleVelocity') return 'Muzzle Vel.';
     if (label === 'fireRate') return 'Fire Rate';
+    if (label === 'handling') return 'Mobility';
     return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -97,7 +98,7 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
                  <PolarRadiusAxis tickCount={4} tick={false} axisLine={false} />
                  <PolarGrid gridType="polygon" className="stroke-border" />
                 <Radar
-                    name="weapon1"
+                    name={chartConfig.weapon1.label}
                     dataKey="weapon1"
                     fill="var(--color-weapon1)"
                     fillOpacity={0.1}
@@ -105,7 +106,7 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
                     strokeWidth={2}
                 />
                 <Radar
-                    name="weapon2"
+                    name={chartConfig.weapon2.label}
                     dataKey="weapon2"
                     fill="var(--color-weapon2)"
                     fillOpacity={0.1}
