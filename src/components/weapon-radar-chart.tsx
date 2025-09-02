@@ -6,6 +6,7 @@ import { PolarAngleAxis, PolarGrid, Radar, RadarChart, PolarRadiusAxis } from "r
 import type { WeaponStats } from "@/lib/ocr"
 import type { ComparatorStats } from "./weapon-comparator"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
   'damage',
@@ -21,7 +22,6 @@ const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRa
 const formatLabel = (label: string) => {
     if (label === 'muzzleVelocity') return 'Muzzle Vel.';
     if (label === 'fireRate') return 'Fire Rate';
-    if (label === 'handling') return 'Mobility';
     return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -41,8 +41,28 @@ const normalizeData = (stats: WeaponStats) => {
     return normalized;
 }
 
+const CustomAngleTick = ({ payload, x, y, textAnchor, isMobile, ...rest }: any) => {
+  const fontSize = isMobile ? 10 : 12;
+  return (
+    <g>
+      <text
+        {...rest}
+        y={y + (y - 150) / 10} // Adjust y position based on distance from center
+        x={x + (x - 150) / 12} // Adjust x position based on distance from center
+        textAnchor={textAnchor}
+        fontSize={fontSize}
+        fill="hsl(var(--foreground))"
+      >
+        {payload.value}
+      </text>
+    </g>
+  );
+}
+
+
 export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
     const { weapon1Stats, weapon2Stats } = data;
+    const isMobile = useIsMobile();
 
     const chartData = React.useMemo(() => {
         const norm1 = normalizeData(weapon1Stats);
@@ -76,12 +96,18 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
         )
     }
 
+    const radarMargin = isMobile ? { top: 10, right: 20, bottom: 10, left: 20 } : { top: 20, right: 40, bottom: 20, left: 40 };
+
     return (
         <ChartContainer
             config={chartConfig}
-            className="mx-auto w-full max-w-lg h-full"
+            className="mx-auto w-full h-full"
         >
-            <RadarChart data={chartData}>
+            <RadarChart 
+                data={chartData}
+                margin={radarMargin}
+                outerRadius={isMobile ? '80%' : '75%'}
+            >
                 <ChartTooltip
                     cursor={false}
                     content={
@@ -93,7 +119,7 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
                 />
                  <PolarAngleAxis 
                     dataKey="stat" 
-                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} 
+                    tick={<CustomAngleTick isMobile={isMobile} />}
                  />
                  <PolarRadiusAxis tickCount={4} tick={false} axisLine={false} />
                  <PolarGrid gridType="polygon" className="stroke-border" />
