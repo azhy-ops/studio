@@ -80,11 +80,11 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
     const chartConfig = {
         weapon1: {
             label: weapon1Stats.name || "Weapon 1",
-            color: "hsl(var(--chart-1))",
+            color: "hsl(var(--chart-2))",
         },
         weapon2: {
             label: weapon2Stats.name || "Weapon 2",
-            color: "hsl(var(--chart-2))",
+            color: "hsl(var(--chart-1))",
         },
     }
 

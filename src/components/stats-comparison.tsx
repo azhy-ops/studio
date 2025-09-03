@@ -59,11 +59,11 @@ const StatsComparison = ({ data }: StatsComparisonProps) => {
         <CardContent>
            <div className="grid grid-cols-2 items-center gap-2 sm:gap-4 px-4 mb-4 text-center">
              <div className="text-right">
-                <h3 className="text-lg font-headline text-chart-1">{weapon1Stats.name || 'Weapon 1'}</h3>
+                <h3 className="text-lg font-headline text-chart-2">{weapon1Stats.name || 'Weapon 1'}</h3>
                 <p className="text-xs text-muted-foreground">{weapon1Stats.type}</p>
              </div>
              <div className="text-left">
-                <h3 className="text-lg font-headline text-chart-2">{weapon2Stats.name || 'Weapon 2'}</h3>
+                <h3 className="text-lg font-headline text-chart-1">{weapon2Stats.name || 'Weapon 2'}</h3>
                 <p className="text-xs text-muted-foreground">{weapon2Stats.type}</p>
              </div>
           </div>
