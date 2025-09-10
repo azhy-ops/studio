@@ -8,14 +8,13 @@ import type { ComparatorStats } from "./weapon-comparator"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { useIsMobile } from "@/hooks/use-mobile"
 
-const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
+const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore' | 'stability'>)[] = [
   'damage',
   'fireRate',
   'range',
   'accuracy',
   'control',
   'handling',
-  'stability',
   'muzzleVelocity',
 ]
 
@@ -38,8 +37,10 @@ const formatLabel = (label: string) => {
 
 const normalizeData = (stats: WeaponStats, damageAxisMax: number) => {
     const normalized: { [key: string]: number } = {};
-    for (const key of statKeyMapping) {
-        let value = stats[key] || 0;
+    const allStatKeys: (keyof WeaponStats)[] = [...statKeyMapping, 'stability'];
+
+    for (const key of allStatKeys) {
+        let value = stats[key] as number || 0;
         if (key === 'damage') {
             value = (stats.damage / damageAxisMax) * 100;
         } else if (key === 'fireRate') {
@@ -83,11 +84,13 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
 
         const norm1 = normalizeData(weapon1Stats, damageAxisMax);
         const norm2 = normalizeData(weapon2Stats, damageAxisMax);
+        
+        const allStatKeys: (keyof WeaponStats)[] = [...statKeyMapping, 'stability'];
 
-        return statKeyMapping
+        return allStatKeys
             .filter(key => (weapon1Stats[key] || 0) > 0 || (weapon2Stats[key] || 0) > 0)
             .map(key => ({
-                stat: formatLabel(key),
+                stat: formatLabel(key as string),
                 weapon1: norm1[key] || 0,
                 weapon2: norm2[key] || 0,
             }));
@@ -131,20 +134,20 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
                            indicator="line"
                            labelClassName="font-bold text-lg"
                            formatter={(value, name, item) => {
+                                const dataKey = item.dataKey as keyof typeof chartConfig;
                                 const statKey = statKeyRawMapping[item.payload.stat];
-                                const rawValue = name === chartConfig.weapon1.label 
-                                  ? weapon1Stats[statKey] 
-                                  : weapon2Stats[statKey];
+                                const rawStats = dataKey === 'weapon1' ? weapon1Stats : weapon2Stats;
+                                const rawValue = rawStats[statKey];
 
                                 const displayValue = statKey === 'fireRate' 
-                                    ? (name === chartConfig.weapon1.label ? weapon1Stats.rpmUsed : weapon2Stats.rpmUsed)?.toFixed(0)
+                                    ? rawStats.rpmUsed?.toFixed(0)
                                     : rawValue;
                                     
                                 return (
                                     <div className="flex items-center justify-between w-full">
-                                        <div className="flex items-center">
-                                            <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: `var(--color-${name})` }}></div>
-                                            <span>{name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: chartConfig[dataKey].color }}></div>
+                                            <span>{chartConfig[dataKey].label}</span>
                                         </div>
                                         <span className="font-mono font-bold">{displayValue}</span>
                                     </div>
