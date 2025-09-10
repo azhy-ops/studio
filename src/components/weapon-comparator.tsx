@@ -129,8 +129,8 @@ export default function WeaponComparator() {
   const [weapon1Preview, setWeapon1Preview] = useState<string | null>(null);
   const [weapon2Preview, setWeapon2Preview] = useState<string | null>(null);
   
-  const [weapon1Stats, setWeapon1Stats] = useState<WeaponStats | null>(null);
-  const [weapon2Stats, setWeapon2Stats] = useState<WeaponStats | null>(null);
+  const [weapon1Stats, setWeapon1Stats] = useState<WeaponStats>(initialWeaponStats('Weapon 1'));
+  const [weapon2Stats, setWeapon2Stats] = useState<WeaponStats>(initialWeaponStats('Weapon 2'));
   
   const [weapon1Calibration, setWeapon1Calibration] = useState<CalibrationStats>(initialCalibrationStats());
   const [weapon2Calibration, setWeapon2Calibration] = useState<CalibrationStats>(initialCalibrationStats());

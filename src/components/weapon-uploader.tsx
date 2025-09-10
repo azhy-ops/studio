@@ -308,11 +308,10 @@ const WeaponUploader = ({
                 onFocus={handleFocus}
                 onBlur={onNameBlur}
                 className="pr-8"
-                disabled={!stats}
                 />
                 <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>
-            <Select onValueChange={onWeaponTypeChange} value={weaponType} disabled={!stats}>
+            <Select onValueChange={onWeaponTypeChange} value={weaponType}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Type" />
               </SelectTrigger>
