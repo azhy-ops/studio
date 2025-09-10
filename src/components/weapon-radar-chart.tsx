@@ -19,6 +19,17 @@ const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRa
   'muzzleVelocity',
 ]
 
+const statKeyRawMapping: { [key: string]: keyof WeaponStats } = {
+    'Damage': 'damage',
+    'Fire Rate': 'fireRate',
+    'Range': 'range',
+    'Accuracy': 'accuracy',
+    'Control': 'control',
+    'Handling': 'handling',
+    'Stability': 'stability',
+    'Muzzle Vel.': 'muzzleVelocity',
+}
+
 const formatLabel = (label: string) => {
     if (label === 'muzzleVelocity') return 'Muzzle Vel.';
     if (label === 'fireRate') return 'Fire Rate';
@@ -119,6 +130,26 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
                         <ChartTooltipContent
                            indicator="line"
                            labelClassName="font-bold text-lg"
+                           formatter={(value, name, item) => {
+                                const statKey = statKeyRawMapping[item.payload.stat];
+                                const rawValue = name === chartConfig.weapon1.label 
+                                  ? weapon1Stats[statKey] 
+                                  : weapon2Stats[statKey];
+
+                                const displayValue = statKey === 'fireRate' 
+                                    ? (name === chartConfig.weapon1.label ? weapon1Stats.rpmUsed : weapon2Stats.rpmUsed)?.toFixed(0)
+                                    : rawValue;
+                                    
+                                return (
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center">
+                                            <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: `var(--color-${name})` }}></div>
+                                            <span>{name}</span>
+                                        </div>
+                                        <span className="font-mono font-bold">{displayValue}</span>
+                                    </div>
+                                )
+                            }}
                         />
                     }
                 />
