@@ -50,12 +50,13 @@ interface WeaponUploaderProps {
   finalStats: (WeaponStats & { finalScore?: number }) | null;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore' | 'stability'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
   'damage',
   'range',
   'accuracy',
   'control',
   'handling',
+  'stability',
   'muzzleVelocity',
 ];
 
@@ -128,13 +129,11 @@ const TTKCalculator = ({
     onFireRateInputChange,
     onFireRateTypeChange,
     onMaxRpmChange,
-    onStatChange
 }: { 
     stats: WeaponStats, 
     onFireRateInputChange: (value: string) => void,
     onFireRateTypeChange: (value: 'rpm' | 'stat') => void,
     onMaxRpmChange: (value: string) => void,
-    onStatChange: (statName: keyof WeaponStats, value: string) => void;
 }) => {
     const defaultRpm = defaultMaxRpm[stats.type || 'Assault Rifle'];
 
@@ -204,14 +203,6 @@ const TTKCalculator = ({
                     />
                 )}
             </div>
-             <div className='grid grid-cols-2 gap-2'>
-                 <StatInput
-                    label="Stability"
-                    value={stats.stability || 0}
-                    onChange={(e) => onStatChange("stability", e.target.value)}
-                    isMissing={stats.stability === 0}
-                />
-             </div>
         </div>
     )
 }
@@ -336,16 +327,16 @@ const WeaponUploader = ({
             <Collapsible open={isCalibrateOpen} onOpenChange={setIsCalibrateOpen}>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
                   {statDisplayOrder.map(statKey => {
-                    const value = stats[statKey]
+                    const value = stats[statKey as keyof WeaponStats]
                     if (value === undefined) return null;
                     return (
                        <StatInput
                           key={statKey}
                           label={statKey}
-                          value={value}
-                          onChange={(e) => onStatChange(statKey, e.target.value)}
+                          value={value as number}
+                          onChange={(e) => onStatChange(statKey as keyof WeaponStats, e.target.value)}
                           isMissing={value === 0}
-                          finalValue={finalStats?.[statKey]}
+                          finalValue={finalStats?.[statKey as keyof WeaponStats] as number | undefined}
                       />
                     )
                   })}
@@ -360,7 +351,6 @@ const WeaponUploader = ({
                 onFireRateInputChange={onFireRateInputChange}
                 onFireRateTypeChange={onFireRateTypeChange}
                 onMaxRpmChange={onMaxRpmChange}
-                onStatChange={onStatChange}
               />
 
               <div className="mt-2 text-center">
