@@ -25,11 +25,13 @@ const formatLabel = (label: string) => {
     return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-const normalizeData = (stats: WeaponStats) => {
+const normalizeData = (stats: WeaponStats, damageAxisMax: number) => {
     const normalized: { [key: string]: number } = {};
     for (const key of statKeyMapping) {
         let value = stats[key] || 0;
-        if (key === 'fireRate') {
+        if (key === 'damage') {
+            value = (stats.damage / damageAxisMax) * 100;
+        } else if (key === 'fireRate') {
             const maxRpm = stats.maxRpmOverride || 1200;
             const rpm = stats.fireRateInputType === 'rpm' ? stats.fireRate : (stats.fireRate / 100) * maxRpm;
             value = (rpm / 1200) * 100;
@@ -65,8 +67,11 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
     const isMobile = useIsMobile();
 
     const chartData = React.useMemo(() => {
-        const norm1 = normalizeData(weapon1Stats);
-        const norm2 = normalizeData(weapon2Stats);
+        const maxDamage = Math.max(weapon1Stats.damage || 0, weapon2Stats.damage || 0);
+        const damageAxisMax = maxDamage < 50 ? 50 : 100;
+
+        const norm1 = normalizeData(weapon1Stats, damageAxisMax);
+        const norm2 = normalizeData(weapon2Stats, damageAxisMax);
 
         return statKeyMapping
             .filter(key => (weapon1Stats[key] || 0) > 0 || (weapon2Stats[key] || 0) > 0)
