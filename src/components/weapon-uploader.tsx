@@ -50,20 +50,19 @@ interface WeaponUploaderProps {
   finalStats: (WeaponStats & { finalScore?: number }) | null;
 }
 
-const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
+const statDisplayOrder: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore' | 'stability'>)[] = [
   'damage',
   'range',
   'accuracy',
   'control',
   'handling',
-  'stability',
   'muzzleVelocity',
 ];
 
 const weaponTypes = ["SMG", "Assault Rifle", "LMG", "Marksman Rifle", "Sniper", "Pistol"];
 
 const StatInput = ({ label, value, onChange, isMissing, finalValue }: { label: string; value: number; onChange: (e: ChangeEvent<HTMLInputElement>) => void, isMissing: boolean, finalValue?: number }) => {
-    const displayLabel = label === 'handling' ? 'Handling & Mobility' : label.replace(/([A-Z])/g, ' $1');
+    const displayLabel = label === 'muzzleVelocity' ? 'Muzzle Vel.' : (label === 'handling' ? 'Handling & Mobility' : label.replace(/([A-Z])/g, ' $1'));
     const isSuspicious = value > 0 && value < 10;
     const isChanged = finalValue !== undefined && finalValue.toFixed(1) !== value.toFixed(1);
 
@@ -129,11 +128,13 @@ const TTKCalculator = ({
     onFireRateInputChange,
     onFireRateTypeChange,
     onMaxRpmChange,
+    onStatChange
 }: { 
     stats: WeaponStats, 
     onFireRateInputChange: (value: string) => void,
     onFireRateTypeChange: (value: 'rpm' | 'stat') => void,
-    onMaxRpmChange: (value: string) => void
+    onMaxRpmChange: (value: string) => void,
+    onStatChange: (statName: keyof WeaponStats, value: string) => void;
 }) => {
     const defaultRpm = defaultMaxRpm[stats.type || 'Assault Rifle'];
 
@@ -203,6 +204,14 @@ const TTKCalculator = ({
                     />
                 )}
             </div>
+             <div className='grid grid-cols-2 gap-2'>
+                 <StatInput
+                    label="Stability"
+                    value={stats.stability || 0}
+                    onChange={(e) => onStatChange("stability", e.target.value)}
+                    isMissing={stats.stability === 0}
+                />
+             </div>
         </div>
     )
 }
@@ -341,12 +350,17 @@ const WeaponUploader = ({
                     )
                   })}
               </div>
+
+               <p className="text-xs text-center text-muted-foreground mt-2 underline">
+                 Missing stats won't affect calculation.
+               </p>
               
               <TTKCalculator 
                 stats={stats} 
                 onFireRateInputChange={onFireRateInputChange}
                 onFireRateTypeChange={onFireRateTypeChange}
                 onMaxRpmChange={onMaxRpmChange}
+                onStatChange={onStatChange}
               />
 
               <div className="mt-2 text-center">

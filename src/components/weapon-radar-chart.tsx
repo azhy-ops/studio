@@ -8,13 +8,14 @@ import type { ComparatorStats } from "./weapon-comparator"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { useIsMobile } from "@/hooks/use-mobile"
 
-const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore' | 'stability'>)[] = [
+const statKeyMapping: (keyof Omit<WeaponStats, 'name' | 'ttk' | 'type' | 'fireRateInputType' | 'maxRpmOverride' | 'shotsToKill' | 'timeBetweenShots' | 'rpmUsed' | 'finalScore'>)[] = [
   'damage',
   'fireRate',
   'range',
   'accuracy',
   'control',
   'handling',
+  'stability',
   'muzzleVelocity',
 ]
 
@@ -32,12 +33,13 @@ const statKeyRawMapping: { [key: string]: keyof WeaponStats } = {
 const formatLabel = (label: string) => {
     if (label === 'muzzleVelocity') return 'Muzzle Vel.';
     if (label === 'fireRate') return 'Fire Rate';
+    if (label === 'handling') return 'Handling';
     return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 const normalizeData = (stats: WeaponStats, damageAxisMax: number) => {
     const normalized: { [key: string]: number } = {};
-    const allStatKeys: (keyof WeaponStats)[] = [...statKeyMapping, 'stability'];
+    const allStatKeys: (keyof WeaponStats)[] = [...statKeyMapping];
 
     for (const key of allStatKeys) {
         let value = stats[key] as number || 0;
@@ -85,7 +87,7 @@ export function WeaponRadarChart({ data }: { data: ComparatorStats }) {
         const norm1 = normalizeData(weapon1Stats, damageAxisMax);
         const norm2 = normalizeData(weapon2Stats, damageAxisMax);
         
-        const allStatKeys: (keyof WeaponStats)[] = [...statKeyMapping, 'stability'];
+        const allStatKeys: (keyof WeaponStats)[] = [...statKeyMapping];
 
         return allStatKeys
             .filter(key => (weapon1Stats[key] || 0) > 0 || (weapon2Stats[key] || 0) > 0)
