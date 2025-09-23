@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { LayoutGrid, LogOut, User as UserIcon, Calculator } from 'lucide-react';
 import Image from 'next/image';
+import { Logo } from './logo';
 
 
 export default function Header() {
@@ -24,7 +25,8 @@ export default function Header() {
         <header className="w-full bg-background/50 backdrop-blur-sm border-b sticky top-0 z-50">
             <div className="container mx-auto py-3 px-4 md:px-8 flex justify-between items-center">
                 <Link href="/" className="flex items-center gap-2 text-xl font-bold font-headline">
-                    Weapon Compare
+                    <Logo className="h-7 w-auto" />
+                    <span className="hidden sm:inline-block">Weapon Compare</span>
                 </Link>
                 <nav className="flex items-center gap-2">
                      <Button variant="ghost" asChild>
