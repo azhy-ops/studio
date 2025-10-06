@@ -49,12 +49,6 @@ const formulas: Record<WeaponType, Record<CombatRange, Record<keyof Omit<WeaponS
 };
 
 
-const rangeDistances: Record<CombatRange, string> = {
-    "Close Range": "0-20m",
-    "Mid Range": "21-50m",
-    "Long Range": "51m+",
-};
-
 const calculateScore = (stats: WeaponStats, range: CombatRange): number => {
   const weaponType = stats.type as WeaponType || 'Assault Rifle';
   const formula = formulas[weaponType]?.[range];
@@ -156,13 +150,11 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
               <h3 className="font-headline text-2xl text-accent flex items-center justify-center gap-2">
                 <Trophy className="w-7 h-7" /> Best for {selectedRange}: {winner}
               </h3>
-               <p className="text-xs text-muted-foreground mt-1">Effective at {rangeDistances[selectedRange]}</p>
             </div>
           )}
            {winner === null && (
             <div className="text-center bg-muted/50 border border-muted-foreground/20 rounded-lg p-4">
               <h3 className="font-headline text-2xl text-muted-foreground">It's a tie!</h3>
-               <p className="text-xs text-muted-foreground mt-1">Both are equally effective at {rangeDistances[selectedRange]}</p>
             </div>
           )}
         </CardContent>
@@ -172,5 +164,3 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
 };
 
 export default CombatRangeComparison;
-
-    
