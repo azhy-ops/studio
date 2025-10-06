@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import type { WeaponStats } from '@/lib/ocr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Trophy } from 'lucide-react';
@@ -103,21 +103,8 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl sm:text-4xl">Combat Range Analysis</CardTitle>
           <CardDescription>Select a combat range to see the recommended weapon based on its type.</CardDescription>
-          <div className="pt-2 flex justify-center flex-col items-center">
-            <Select onValueChange={(value: CombatRange) => setSelectedRange(value)} defaultValue={selectedRange}>
-              <SelectTrigger className="w-[200px] font-headline">
-                <SelectValue placeholder="Select Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Close Range">Close Range</SelectItem>
-                <SelectItem value="Mid Range">Mid Range</SelectItem>
-                <SelectItem value="Long Range">Long Range</SelectItem>
-              </SelectContent>
-            </Select>
-             <p className="text-xs text-muted-foreground mt-2">{rangeDistances[selectedRange]}</p>
-          </div>
         </CardHeader>
-        <CardContent className="space-y-6 min-h-[280px]">
+        <CardContent className="space-y-4 min-h-[280px]">
           <div className="space-y-4">
             {/* Weapon 1 Score */}
             <div>
@@ -133,6 +120,22 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
               </div>
               <Progress value={(weapon1Score / maxScore) * 100} className={cn(winner === (data.weapon1Stats.name || 'Weapon 1') && '[&>div]:bg-accent')} />
             </div>
+
+            {/* Range Selection Buttons */}
+            <div className="flex justify-center gap-2 py-2">
+              {(["Close Range", "Mid Range", "Long Range"] as CombatRange[]).map((range) => (
+                <Button
+                  key={range}
+                  variant={selectedRange === range ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedRange(range)}
+                  className="font-headline"
+                >
+                  {range}
+                </Button>
+              ))}
+            </div>
+
             {/* Weapon 2 Score */}
             <div>
               <div className="flex justify-between items-baseline mb-1">
@@ -153,11 +156,13 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
               <h3 className="font-headline text-2xl text-accent flex items-center justify-center gap-2">
                 <Trophy className="w-7 h-7" /> Best for {selectedRange}: {winner}
               </h3>
+               <p className="text-xs text-muted-foreground mt-1">Effective at {rangeDistances[selectedRange]}</p>
             </div>
           )}
            {winner === null && (
             <div className="text-center bg-muted/50 border border-muted-foreground/20 rounded-lg p-4">
               <h3 className="font-headline text-2xl text-muted-foreground">It's a tie!</h3>
+               <p className="text-xs text-muted-foreground mt-1">Both are equally effective at {rangeDistances[selectedRange]}</p>
             </div>
           )}
         </CardContent>
@@ -167,3 +172,5 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
 };
 
 export default CombatRangeComparison;
+
+    
