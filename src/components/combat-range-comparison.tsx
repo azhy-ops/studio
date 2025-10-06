@@ -115,21 +115,6 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
               <Progress value={(weapon1Score / maxScore) * 100} className={cn(winner === (data.weapon1Stats.name || 'Weapon 1') && '[&>div]:bg-accent')} />
             </div>
 
-            {/* Range Selection Buttons */}
-            <div className="flex justify-center gap-2 py-2">
-              {(["Close Range", "Mid Range", "Long Range"] as CombatRange[]).map((range) => (
-                <Button
-                  key={range}
-                  variant={selectedRange === range ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedRange(range)}
-                  className="font-headline"
-                >
-                  {range}
-                </Button>
-              ))}
-            </div>
-
             {/* Weapon 2 Score */}
             <div>
               <div className="flex justify-between items-baseline mb-1">
@@ -143,6 +128,21 @@ const CombatRangeComparison = ({ data }: CombatRangeComparisonProps) => {
                 )}>{weapon2Score}</span>
               </div>
               <Progress value={(weapon2Score / maxScore) * 100} className={cn(winner === (data.weapon2Stats.name || 'Weapon 2') && '[&>div]:bg-accent')} />
+            </div>
+
+            {/* Range Selection Buttons */}
+            <div className="flex justify-center gap-2 py-2">
+              {(["Close Range", "Mid Range", "Long Range"] as CombatRange[]).map((range) => (
+                <Button
+                  key={range}
+                  variant={selectedRange === range ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedRange(range)}
+                  className="font-headline"
+                >
+                  {range}
+                </Button>
+              ))}
             </div>
           </div>
           {winner && (
